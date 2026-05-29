@@ -1,0 +1,3518 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#E31837">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="辅食日记">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="manifest" href="manifest.json">
+<title>辣堡的辅食日记</title>
+<style>
+/* ===== Reset & Base ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  /* Core neo-brutalist palette */
+  --primary: #E31837;
+  --primary-light: #FDE8EA;
+  --primary-dark: #C4102E;
+  --success: #6BCB77;
+  --success-light: #E8F8EA;
+  --danger: #E31837;
+  --danger-light: #FDE8EA;
+  --warning: #FFA502;
+  --warning-light: #FFF4E0;
+  --info: #4D96FF;
+  --info-light: #E5F0FF;
+  /* Neutrals */
+  --gray-50: #FFFFFF;
+  --gray-100: #F5F3E8;
+  --gray-200: #E8E5D5;
+  --gray-300: #D0CDC0;
+  --gray-400: #A8A598;
+  --gray-500: #888578;
+  --gray-600: #686558;
+  --gray-700: #484538;
+  --gray-800: #2A2820;
+  --gray-900: #1A1A1A;
+  /* Neo-brutalist tokens */
+  --black: #1A1A1A;
+  --radius: 14px;
+  --radius-sm: 10px;
+  --border: 3px solid var(--black);
+  --shadow: 4px 4px 0 var(--black);
+  --shadow-sm: 2px 2px 0 var(--black);
+  --shadow-lg: 6px 6px 0 var(--black);
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+body {
+  font-family: var(--font);
+  background: #FFFFFF;
+  color: var(--gray-800);
+  min-height: 100vh;
+  line-height: 1.6;
+}
+
+/* ===== Header ===== */
+.header {
+  background: var(--black);
+  color: white;
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 3px solid #333;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.header-left { display: flex; align-items: center; gap: 14px; }
+.header-emoji { font-size: 36px; }
+.header-title { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
+.header-subtitle { font-size: 13px; color: #BBB; margin-top: 2px; }
+.header-right { display: flex; gap: 8px; align-items: center; }
+.header-right .header-btn {
+  background: transparent;
+  color: #CCC;
+  border: 1.5px solid #555;
+  border-radius: 6px;
+  padding: 5px 12px;
+  font-size: 12px;
+  font-family: var(--font);
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+.header-right .header-btn:hover { background: #333; color: white; border-color: #888; }
+.header-right .header-btn:active { background: #444; }
+.header-right .header-btn.danger-hover:hover { background: var(--danger); border-color: var(--danger); color: white; }
+.header .baby-info {
+  background: #3A3A3A;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 2px solid #555;
+}
+.header .baby-info .dot { width: 7px; height: 7px; border-radius: 50%; background: #FFD93D; }
+
+/* ===== Tabs ===== */
+.tabs {
+  display: flex;
+  background: white;
+  padding: 0;
+  border-bottom: 2px solid var(--gray-200);
+  position: sticky;
+  top: 75px;
+  z-index: 99;
+  overflow-x: auto;
+}
+.tab {
+  padding: 14px 22px;
+  border: none;
+  border-right: 2px solid var(--gray-200);
+  background: none;
+  font-size: 15px;
+  font-family: var(--font);
+  color: var(--gray-600);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  font-weight: 600;
+}
+.tab:last-child { border-right: none; }
+.tab:hover { background: var(--primary-light); color: var(--primary); }
+.tab.active { background: var(--black); color: white; }
+.tab .badge {
+  display: inline-block;
+  background: var(--danger);
+  color: white;
+  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: 8px;
+  margin-left: 6px;
+  vertical-align: middle;
+  font-weight: 700;
+}
+
+/* ===== Panel ===== */
+.panel {
+  max-width: 1100px;
+  margin: 20px auto;
+  padding: 0 16px;
+}
+.panel-content { display: none; }
+.panel-content.active { display: block; }
+
+/* ===== Calendar ===== */
+.calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.calendar-nav {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.calendar-month {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--black);
+  letter-spacing: -0.5px;
+}
+.calendar-nav-btn {
+  width: 36px; height: 36px;
+  border-radius: 8px;
+  border: 2px solid var(--gray-200);
+  background: white;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--gray-700);
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s ease;
+}
+.calendar-nav-btn:hover { background: var(--gray-100); color: var(--black); }
+.calendar-nav-btn:active { background: var(--gray-200); }
+.calendar-today-btn {
+  padding: 7px 16px;
+  border-radius: 8px;
+  border: 2px solid var(--gray-200);
+  background: white;
+  color: var(--gray-700);
+  cursor: pointer;
+  font-size: 13px;
+  font-family: var(--font);
+  font-weight: 700;
+  transition: all 0.15s ease;
+}
+.calendar-today-btn:hover { background: var(--gray-100); }
+.calendar-today-btn:active { background: var(--gray-200); }
+.calendar-export-btn {
+  padding: 7px 16px;
+  border-radius: 8px;
+  border: 2px solid var(--gray-200);
+  background: var(--info);
+  color: white;
+  cursor: pointer;
+  font-size: 13px;
+  font-family: var(--font);
+  font-weight: 700;
+  transition: all 0.15s ease;
+}
+.calendar-export-btn:hover { background: #3A82EB; }
+.calendar-export-btn:active { background: #2A72DB; }
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  background: white;
+  border: var(--border);
+  border-radius: var(--radius);
+  padding: 10px;
+  box-shadow: var(--shadow);
+  font-size: 12px;
+}
+.calendar-day-header {
+  text-align: center;
+  font-size: 12px;
+  color: var(--gray-500);
+  font-weight: 700;
+  padding: 6px 0 8px 0;
+  text-transform: uppercase;
+}
+.calendar-day-header:first-child { color: #FE7733; }
+.calendar-day-header:last-child { color: #FE7733; }
+.calendar-day {
+  min-height: 88px;
+  border-radius: 8px;
+  padding: 4px 5px 5px 5px;
+  cursor: pointer;
+  border: 2px solid var(--gray-200);
+  background: var(--gray-50);
+  display: flex;
+  flex-direction: column;
+  transition: all 0.15s ease;
+  overflow: hidden;
+  font-size: 11px;
+}
+.calendar-day:hover { border-color: var(--primary); }
+.calendar-day.today { border: none; background: #B1FA63; }
+.calendar-day.today .day-num { color: var(--black); }
+.calendar-day.selected { background: #FDE8EA; border: 3px solid var(--primary-dark); box-shadow: var(--shadow-sm); }
+.calendar-day.other-month { color: var(--gray-400); background: var(--gray-100); border-color: var(--gray-200); }
+.calendar-day.other-month .day-num { color: var(--gray-400); }
+.calendar-day .day-num { font-size: 13px; font-weight: 800; color: var(--gray-700); margin-bottom: 2px; }
+.calendar-day.weekend .day-num { color: #FE7733; }
+.calendar-day.today.weekend .day-num { color: var(--black); }
+.calendar-day .meal-tags {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  overflow: hidden;
+  flex: 1;
+}
+.calendar-day .meal-tag {
+  font-size: 9px;
+  line-height: 1.4;
+  color: var(--black);
+  background: transparent;
+  border-radius: 4px;
+  padding: 1px 3px;
+  white-space: normal;
+  word-break: break-all;
+  font-weight: 400;
+}
+.calendar-day.other-month .meal-tag { color: var(--gray-400); background: transparent; }
+.calendar-day .meal-tag.empty {
+  color: var(--gray-300);
+  background: transparent;
+  font-style: italic;
+  font-weight: 400;
+}
+
+/* ===== Day Detail ===== */
+.day-detail {
+  background: white;
+  border: var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-top: 16px;
+  box-shadow: var(--shadow);
+}
+.day-detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+.day-detail-title { font-size: 17px; font-weight: 800; color: var(--black); }
+.day-detail .meal-card {
+  border: 2px solid var(--gray-300);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  margin-bottom: 12px;
+  transition: all 0.15s ease;
+}
+.day-detail .meal-card:hover { border-color: var(--black); box-shadow: var(--shadow-sm); }
+.meal-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.meal-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  border: 1.5px solid var(--gray-300);
+}
+.meal-badge.m1 { background: #FDE8EA; color: var(--primary-dark); }
+.meal-badge.m2 { background: #D5E8FF; color: #1565C0; }
+.meal-badge.m3 { background: #D5F0D0; color: #2E7D32; }
+.meal-ingredients {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.meal-ingredient-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--gray-100);
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  border: 2px solid var(--gray-300);
+  font-weight: 600;
+}
+.meal-ingredient-tag .weight { color: var(--gray-500); font-size: 12px; }
+.meal-ingredient-tag .status-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+}
+.meal-ingredient-tag .status-dot.safe { background: var(--success); }
+.meal-ingredient-tag .status-dot.pending { background: var(--warning); }
+.meal-actions { display: flex; gap: 6px; }
+.meal-empty {
+  text-align: center;
+  padding: 20px;
+  color: var(--gray-400);
+}
+/* Inline meal form */
+.inline-meal-form {
+  border: 3px dashed var(--gray-300);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  margin-top: 8px;
+  background: var(--gray-50);
+  display: none;
+}
+.inline-meal-form.open { display: block; }
+.inline-meal-form .form-group { margin-bottom: 10px; }
+.inline-meal-form .form-label { font-size: 12px; }
+.inline-meal-form .ingredient-select-list { max-height: 140px; }
+.meal-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--gray-100);
+  border: 2px solid var(--gray-200);
+  margin-bottom: 6px;
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+.meal-row:hover { border-color: var(--gray-400); transform: translateY(-1px); }
+.meal-row .meal-slot-label {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--gray-400);
+  min-width: 64px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.meal-row .meal-slot-content {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gray-700);
+}
+.meal-row .meal-slot-content.empty {
+  color: var(--gray-400);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 12px;
+}
+.meal-row .meal-slot-action {
+  font-size: 16px;
+  color: var(--primary);
+  font-weight: 800;
+  flex-shrink: 0;
+}
+.meal-row.has-meal .meal-slot-label { color: var(--primary-dark); }
+.meal-row.has-meal { border-color: var(--primary); background: var(--primary-light); }
+.meal-row[draggable="true"] { cursor: grab; }
+.meal-row[draggable="true"]:active { cursor: grabbing; }
+.meal-row.dragging { opacity: 0.5; border-style: dashed; }
+.meal-row.drag-over { border-color: var(--primary); border-style: dashed; background: var(--primary-light); transform: scale(1.02); }
+
+/* ===== Daily Stats ===== */
+.daily-stats {
+  background: white;
+  border: var(--border);
+  border-radius: var(--radius);
+  padding: 18px 22px;
+  margin-top: 14px;
+  box-shadow: var(--shadow);
+}
+.daily-stats-title { font-size: 15px; font-weight: 800; margin-bottom: 14px; color: var(--black); }
+
+/* Bar Chart Nutrition Stats — 4-column grid */
+.bar-chart {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.bar-row {
+  background: var(--gray-100);
+  border: 2px solid var(--gray-200);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.bar-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--gray-700);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.bar-label .cat-target { font-size: 10px; color: var(--gray-400); font-weight: 600; margin-left: auto; }
+.bar-container { width: 100%; }
+.bar-track {
+  position: relative;
+  height: 20px;
+  background: var(--gray-200);
+  border-radius: 4px;
+  overflow: hidden;
+  border: 2px solid var(--gray-300);
+}
+.bar-range {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  background: #EEEEEE;
+  border-radius: 0;
+  z-index: 1;
+}
+.bar-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  border-radius: 0;
+  z-index: 2;
+  transition: width 0.5s ease;
+  min-width: 2px;
+}
+.bar-value {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+}
+.bar-value .val-num { font-weight: 800; font-size: 13px; }
+.bar-value .bar-status-text { font-size: 10px; font-weight: 700; }
+
+/* ===== Ingredient Management ===== */
+.ingredient-toolbar {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+}
+.ingredient-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+}
+.ingredient-card {
+  background: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto auto;
+  gap: 8px 10px;
+  align-items: center;
+  transition: all 0.15s ease;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+.ingredient-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+.ingredient-card.allergy { background: var(--danger-light); }
+.ingredient-emoji { font-size: 28px; grid-column: 1; grid-row: 1; align-self: center; }
+.ingredient-info { grid-column: 2; grid-row: 1; display: flex; flex-direction: column; gap: 2px; }
+.ingredient-name { font-size: 14px; font-weight: 700; text-align: left; }
+.ingredient-category { font-size: 11px; color: var(--gray-500); font-weight: 600; text-align: left; }
+.ingredient-status-badge {
+  grid-column: 1;
+  grid-row: 2;
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  border: 1.5px solid;
+  text-align: center;
+  white-space: nowrap;
+  justify-self: start;
+}
+.ingredient-status-badge.safe { background: var(--success-light); color: #2E7D32; border-color: var(--success); }
+.ingredient-status-badge.pending { background: white; color: var(--black); border-color: var(--black); }
+.ingredient-status-badge.allergy { background: var(--danger-light); color: var(--danger); border-color: var(--danger); }
+.ingredient-pref { grid-column: 2; grid-row: 2; display: flex; gap: 3px; align-items: center; justify-self: end; }
+.ingredient-pref .pref-btn {
+  font-size: 18px;
+  cursor: pointer;
+  padding: 2px;
+  border-radius: 50%;
+  transition: all 0.15s ease;
+  background: none;
+  border: none;
+  color: #C0C0C0;
+}
+.ingredient-pref .pref-btn.active { color: var(--danger); transform: scale(1.15); }
+.ingredient-pref .pref-btn:hover { color: #888; }
+.ingredient-date { font-size: 11px; color: var(--gray-500); font-weight: 600; grid-column: 1 / -1; }
+
+/* ===== Recipe Management ===== */
+.recipe-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 14px;
+}
+.recipe-card {
+  background: white;
+  border: 2px solid var(--gray-300);
+  border-radius: var(--radius);
+  padding: 18px;
+  transition: all 0.15s ease;
+}
+.recipe-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); transform: translateY(-2px); }
+.recipe-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.recipe-name { font-size: 16px; font-weight: 800; color: var(--black); }
+.recipe-actions { display: flex; gap: 6px; }
+.recipe-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.recipe-record-btn {
+  display: block;
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  border: none;
+  background: var(--primary);
+  color: white;
+  font-size: 14px;
+  font-family: var(--font);
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  margin-top: 8px;
+}
+.recipe-record-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+.recipe-record-btn:active { transform: translateY(0); }
+.recipe-record-btn.recorded { background: var(--success); }
+
+/* ===== Buttons ===== */
+.btn {
+  padding: 10px 22px;
+  border-radius: 10px;
+  border: 2px solid var(--gray-300);
+  font-size: 14px;
+  font-family: var(--font);
+  cursor: pointer;
+  font-weight: 700;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: white;
+  color: var(--gray-700);
+}
+.btn:hover { background: var(--gray-100); }
+.btn:active { background: var(--gray-200); }
+.btn-primary { background: var(--primary); color: white; border-color: var(--primary); }
+.btn-primary:hover { background: var(--primary-dark); }
+.btn-outline { background: white; border-color: var(--gray-300); }
+.btn-outline:hover { background: var(--gray-100); }
+.btn-success { background: var(--success); color: white; border-color: var(--success); }
+.btn-success:hover { background: #5AB766; }
+.btn-danger { background: var(--danger); color: white; border-color: var(--danger); }
+.btn-danger:hover { background: var(--primary-dark); }
+.btn-sm { padding: 6px 14px; font-size: 12px; border-radius: 8px; border-width: 1.5px; }
+.btn-icon {
+  width: 34px; height: 34px;
+  border-radius: 8px;
+  border: 2px solid var(--gray-300);
+  background: white;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s ease;
+}
+.btn-icon:hover { background: var(--gray-100); }
+.btn-icon:active { background: var(--gray-200); }
+.btn-icon.danger:hover { background: var(--danger-light); }
+
+/* ===== Modal ===== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.modal {
+  background: white;
+  border: 2px solid var(--gray-300);
+  border-radius: var(--radius);
+  padding: 24px;
+  width: 90%;
+  max-width: 560px;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+}
+.modal h3 { font-size: 18px; margin-bottom: 18px; display: flex; align-items: center; gap: 8px; font-weight: 800; }
+.form-group { margin-bottom: 14px; }
+.form-label { display: block; font-size: 13px; font-weight: 700; color: var(--gray-700); margin-bottom: 5px; }
+.form-input, .form-select {
+  width: 100%;
+  padding: 10px 14px;
+  border: 2px solid var(--gray-300);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-family: var(--font);
+  transition: all 0.15s ease;
+  background: white;
+}
+.form-input:focus, .form-select:focus { outline: none; border-color: var(--black); }
+
+/* Custom select dropdown arrow on the right */
+#statusFilterSelect,
+#categoryFilterSelect,
+#recipeCatFilterSelect {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23333' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 28px !important;
+}
+.form-input::placeholder { color: var(--gray-400); }
+.form-row { display: flex; gap: 10px; align-items: end; }
+.form-row > * { flex: 1; }
+.form-actions { display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end; }
+.ingredient-select-list {
+  max-height: 200px;
+  overflow-y: auto;
+  border: 2px solid var(--gray-300);
+  border-radius: var(--radius-sm);
+  padding: 6px;
+}
+.ingredient-select-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border: 2px solid transparent;
+}
+.ingredient-select-item:hover { background: var(--gray-100); border-color: var(--gray-300); }
+.ingredient-select-item.selected { background: var(--primary-light); border-color: var(--primary); }
+.selected-ingredients {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 40px;
+  padding: 8px;
+  border: 3px dashed var(--gray-300);
+  border-radius: var(--radius-sm);
+}
+.selected-ingredient-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--primary-light);
+  padding: 5px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  border: 1.5px solid var(--primary);
+  font-weight: 600;
+}
+.selected-ingredient-tag input {
+  width: 40px;
+  border: 2px solid var(--gray-300);
+  background: white;
+  padding: 2px 4px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+}
+.remove-tag {
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--gray-500);
+  margin-left: 2px;
+  font-weight: 700;
+}
+.remove-tag:hover { color: var(--danger); }
+.meal-name-input {
+  font-size: 15px;
+  padding: 8px 12px;
+  border: 3px dashed var(--gray-300);
+  border-radius: var(--radius-sm);
+  width: 100%;
+  font-family: var(--font);
+  font-weight: 600;
+}
+.meal-name-input:focus { border-color: var(--black); outline: none; }
+
+/* ===== Alerts ===== */
+.alert {
+  padding: 12px 16px;
+  border-radius: var(--radius-sm);
+  margin-bottom: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  border: 1.5px solid;
+}
+.alert-warning { background: var(--warning-light); color: #E65100; border-color: var(--warning); }
+.alert-info { background: var(--info-light); color: #0D47A1; border-color: var(--info); }
+.alert-danger { background: var(--danger-light); color: var(--danger); border-color: var(--danger); }
+
+/* ===== Allergy alert banner ===== */
+.allergy-banner {
+  background: var(--danger-light);
+  border: var(--border);
+  border-color: var(--danger);
+  border-radius: var(--radius);
+  padding: 12px 18px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 640px) {
+  .header { padding: 12px 16px; }
+  .header-title { font-size: 18px; }
+  .header-subtitle { font-size: 11px; }
+  .tab { padding: 12px 14px; font-size: 13px; }
+  .calendar-day { min-height: 55px; padding: 2px; font-size: 10px; }
+  .calendar-day .day-num { font-size: 11px; }
+  .calendar-grid { padding: 5px; gap: 2px; }
+  .calendar-header { flex-direction: column; align-items: flex-start; }
+  .ingredient-grid { grid-template-columns: repeat(2, 1fr); }
+  .recipe-list { grid-template-columns: 1fr; }
+  .bar-chart { grid-template-columns: 1fr 1fr; gap: 6px; }
+  .daily-stats-title { font-size: 13px; }
+}
+</style>
+</head>
+<body>
+<!-- html2canvas CDN for calendar image export -->
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-left">
+    <div class="header-emoji">🍔</div>
+    <div>
+      <div class="header-title">辣堡的辅食日记</div>
+      <div class="header-subtitle">2025年9月26日出生 · 辅食添加第一阶段</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <button class="header-btn" onclick="exportBackup()">数据存储</button>
+    <button class="header-btn danger-hover" onclick="importBackup()">数据恢复</button>
+  </div>
+</div>
+
+<!-- Tabs -->
+<div class="tabs">
+  <button class="tab active" data-tab="calendar">辅食日历</button>
+  <button class="tab" data-tab="ingredients">食材管理 <span class="badge" id="allergyCount" style="display:none"></span></button>
+  <button class="tab" data-tab="recipes">食谱管理</button>
+  <button class="tab" data-tab="stats">营养统计</button>
+</div>
+
+<!-- Main Panel -->
+<div class="panel">
+
+  <!-- Calendar Tab -->
+  <div class="panel-content active" id="panel-calendar">
+    <div class="calendar-header">
+      <div class="calendar-nav">
+        <button class="calendar-nav-btn" onclick="prevMonth()">◀</button>
+        <span class="calendar-month" id="calendarMonth"></span>
+        <button class="calendar-nav-btn" onclick="nextMonth()">▶</button>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="calendar-today-btn" onclick="goToday()">今天</button>
+        <button class="calendar-today-btn" style="background:var(--danger-light);color:var(--danger);" onclick="showClearOptions()">清除</button>
+        <button class="calendar-export-btn" onclick="exportCalendarImage()">导出</button>
+      </div>
+    </div>
+    <div class="calendar-grid" id="calendarGrid"></div>
+    <div id="dailyStats" class="daily-stats" style="display:none;"></div>
+  </div>
+
+  <!-- Ingredients Tab -->
+  <div class="panel-content" id="panel-ingredients">
+    <div class="allergy-banner" id="allergyBanner" style="display:none">
+      ⚠️ <span id="allergyBannerText"></span>
+    </div>
+    <div class="ingredient-toolbar">
+      <div style="display:flex;gap:10px;align-items:center;flex:1;flex-wrap:wrap;margin-left:16px;">
+        <select id="statusFilterSelect" class="form-select" style="width:auto;min-width:110px;font-size:13px;padding:8px 12px;" onchange="onStatusFilterChange(this.value)">
+          <option value="all">全部状态</option>
+          <option value="pending">待添加</option>
+          <option value="safe">已排敏</option>
+          <option value="allergy">过敏</option>
+        </select>
+        <select id="categoryFilterSelect" class="form-select" style="width:auto;min-width:110px;font-size:13px;padding:8px 12px;" onchange="onCategoryFilterChange(this.value)">
+          <option value="all">全部分类</option>
+        </select>
+      </div>
+      <button class="btn btn-primary" onclick="showAddIngredient()">+ 添加食材</button>
+    </div>
+    <div class="ingredient-grid" id="ingredientGrid"></div>
+  </div>
+
+  <!-- Recipes Tab -->
+  <div class="panel-content" id="panel-recipes">
+    <div style="display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap;">
+      <input type="text" id="recipeSearch" class="form-input" placeholder="搜索食谱..." style="width:180px;flex-shrink:0;" oninput="renderRecipes()">
+      <select id="recipeCatFilterSelect" class="form-select" style="width:auto;min-width:110px;font-size:13px;padding:8px 12px;" onchange="onRecipeCatFilterChange(this.value)">
+        <option value="all">全部分类</option>
+      </select>
+      <button class="btn btn-primary" style="margin-left:auto;" onclick="showAddRecipe()">+ 新建食谱</button>
+    </div>
+    <div class="recipe-list" id="recipeList"></div>
+  </div>
+
+  <!-- Stats Tab -->
+  <div class="panel-content" id="panel-stats">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+      <h3 style="font-size:17px;">辅食添加统计</h3>
+    </div>
+    <div id="statsOverview"></div>
+  </div>
+</div>
+
+<!-- Modals -->
+<div id="modalContainer"></div>
+
+<script>
+// ===== IndexedDB Wrapper =====
+const DB_NAME = 'babyFoodDB';
+const DB_VERSION = 1;
+let db;
+
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = (e) => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains('ingredients')) {
+        const store = db.createObjectStore('ingredients', { keyPath: 'id', autoIncrement: true });
+        store.createIndex('category', 'category');
+        store.createIndex('status', 'status');
+      }
+      if (!db.objectStoreNames.contains('meals')) {
+        const store = db.createObjectStore('meals', { keyPath: 'id', autoIncrement: true });
+        store.createIndex('date', 'date');
+      }
+      if (!db.objectStoreNames.contains('recipes')) {
+        db.createObjectStore('recipes', { keyPath: 'id', autoIncrement: true });
+      }
+    };
+    req.onsuccess = (e) => { db = e.target.result; resolve(db); };
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function dbPut(storeName, data) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(storeName, 'readwrite');
+    const store = tx.objectStore(storeName);
+    const req = store.put(data);
+    tx.oncomplete = () => resolve(req.result);
+    tx.onerror = () => reject(tx.error || new Error('Transaction failed'));
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function dbGetAll(storeName) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(storeName, 'readonly');
+    const store = tx.objectStore(storeName);
+    const req = store.getAll();
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function dbGet(storeName, id) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(storeName, 'readonly');
+    const store = tx.objectStore(storeName);
+    const req = store.get(id);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function dbDelete(storeName, id) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(storeName, 'readwrite');
+    const store = tx.objectStore(storeName);
+    const req = store.delete(id);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error || new Error('Transaction failed'));
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function dbGetByIndex(storeName, indexName, value) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(storeName, 'readonly');
+    const store = tx.objectStore(storeName);
+    const index = store.index(indexName);
+    const req = index.getAll(value);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+// ===== Data =====
+const INGREDIENT_CATEGORIES = {
+  '谷类': { emoji: '🥯', color: '#7048E8', light: '#F3EFFF' },
+  '蔬菜': { emoji: '🥬', color: '#C6DF61', light: '#F4F9E4' },
+  '水果': { emoji: '🍎', color: '#FFC82C', light: '#FFF9E5' },
+  '肉类': { emoji: '🥩', color: '#DF5959', light: '#FCEEEE' },
+  '水产': { emoji: '🐟', color: '#4785FF', light: '#EDF3FF' },
+  '蛋类': { emoji: '🥚', color: '#F4EFE6', light: '#FDFAF5' },
+  '油脂': { emoji: '🧈', color: '#F9E496', light: '#FEFAEF' },
+  '其他': { emoji: '🧀', color: '#FF8736', light: '#FFF3EB' }
+};
+
+const SEED_INGREDIENTS = [
+  { name: '米粉/米糊', category: '谷类' },
+  { name: '大米', category: '谷类' },
+  { name: '小米', category: '谷类' },
+  { name: '燕麦', category: '谷类' },
+  { name: '面条', category: '谷类' },
+  { name: '南瓜', category: '蔬菜' },
+  { name: '胡萝卜', category: '蔬菜' },
+  { name: '土豆', category: '蔬菜' },
+  { name: '西兰花', category: '蔬菜' },
+  { name: '菠菜', category: '蔬菜' },
+  { name: '山药', category: '蔬菜' },
+  { name: '红薯', category: '蔬菜' },
+  { name: '番茄', category: '蔬菜' },
+  { name: '油菜', category: '蔬菜' },
+  { name: '白菜', category: '蔬菜' },
+  { name: '苹果', category: '水果' },
+  { name: '香蕉', category: '水果' },
+  { name: '梨', category: '水果' },
+  { name: '牛油果', category: '水果' },
+  { name: '蓝莓', category: '水果' },
+  { name: '猪肉', category: '肉类' },
+  { name: '鸡肉', category: '肉类' },
+  { name: '牛肉', category: '肉类' },
+  { name: '猪肝', category: '肉类' },
+  { name: '三文鱼', category: '水产' },
+  { name: '鳕鱼', category: '水产' },
+  { name: '虾', category: '水产' },
+  { name: '蛋黄', category: '蛋类' },
+  { name: '蛋白(全蛋)', category: '蛋类' },
+  { name: '核桃油', category: '油脂' },
+  { name: '亚麻籽油', category: '油脂' },
+  { name: '橄榄油', category: '油脂' },
+  { name: '豆腐', category: '其他' },
+];
+
+const PRESET_RECIPES = [
+  { name: '南瓜米糊', ingredients: [{ name: '南瓜', weight: 10, unit: 'g' }, { name: '米粉/米糊', weight: 5, unit: 'g' }], category: '7月龄' },
+  { name: '胡萝卜米糊', ingredients: [{ name: '胡萝卜', weight: 10, unit: 'g' }, { name: '米粉/米糊', weight: 5, unit: 'g' }], category: '7月龄' },
+  { name: '土豆泥', ingredients: [{ name: '土豆', weight: 15, unit: 'g' }, { name: '核桃油', weight: 1, unit: 'g' }], category: '7月龄' },
+  { name: '苹果泥', ingredients: [{ name: '苹果', weight: 15, unit: 'g' }], category: '7月龄' },
+  { name: '香蕉牛油果泥', ingredients: [{ name: '香蕉', weight: 10, unit: 'g' }, { name: '牛油果', weight: 10, unit: 'g' }], category: '7月龄' },
+  { name: '西兰花米糊', ingredients: [{ name: '西兰花', weight: 10, unit: 'g' }, { name: '米粉/米糊', weight: 5, unit: 'g' }], category: '7月龄' },
+  { name: '山药红枣泥', ingredients: [{ name: '山药', weight: 12, unit: 'g' }, { name: '红枣', weight: 3, unit: 'g' }], category: '8月龄' },
+  { name: '鸡肉南瓜泥', ingredients: [{ name: '鸡肉', weight: 10, unit: 'g' }, { name: '南瓜', weight: 10, unit: 'g' }], category: '8月龄' },
+  { name: '猪肝菠菜泥', ingredients: [{ name: '猪肝', weight: 10, unit: 'g' }, { name: '菠菜', weight: 10, unit: 'g' }], category: '8月龄' },
+  { name: '三文鱼土豆泥', ingredients: [{ name: '三文鱼', weight: 10, unit: 'g' }, { name: '土豆', weight: 10, unit: 'g' }], category: '9月龄' },
+  { name: '蛋黄米糊', ingredients: [{ name: '蛋黄', weight: 8, unit: 'g' }, { name: '米粉/米糊', weight: 5, unit: 'g' }], category: '7月龄' },
+];
+
+const NUTRITION_TARGETS = {
+  1: {
+    谷类: { min: 5, max: 10, unit: 'g', label: '5~10g' },
+    蔬菜: { min: 10, max: 15, unit: 'g', label: '10~15g' },
+    水果: { min: 10, max: 15, unit: 'g', label: '10~15g' },
+    肉类: { min: 5, max: 15, unit: 'g', label: '5~15g' },
+    水产: { min: 5, max: 15, unit: 'g', label: '5~15g' },
+    蛋类: { min: 5, unit: 'g', label: '≥5g' },
+    油脂: { min: 1, max: 3, unit: '滴', label: '1~3滴' },
+    其他: { unit: 'g', label: '—' },
+  },
+  2: {
+    谷类: { min: 10, max: 20, unit: 'g', label: '10~20g' },
+    蔬菜: { min: 15, max: 25, unit: 'g', label: '15~25g' },
+    水果: { min: 15, max: 25, unit: 'g', label: '15~25g' },
+    肉类: { min: 10, max: 15, unit: 'g', label: '10~15g' },
+    水产: { min: 10, max: 15, unit: 'g', label: '10~15g' },
+    蛋类: { label: '1/2个蛋黄', unit: '个', customLabel: true },
+    油脂: { min: 1, max: 3, unit: '滴', label: '1~3滴' },
+    其他: { unit: 'g', label: '—' },
+  },
+};
+
+// Calculate which feeding month we are in (1-indexed)
+// Month 1 starts from the earliest recorded meal date
+// referenceDate: optional date string (YYYY-MM-DD), defaults to today
+function getFeedingMonth(referenceDate) {
+  const mealDates = allMeals.map(m => m.date).filter(Boolean);
+  if (mealDates.length === 0) return 1;
+  mealDates.sort();
+  const earliest = new Date(mealDates[0]);
+  const now = referenceDate ? new Date(referenceDate) : new Date();
+  // Month 1: earliest date to earliest date + 30 days (exclusive)
+  // Month 2: earliest + 30 to earliest + 60, etc.
+  const msPerMonth = 30 * 24 * 60 * 60 * 1000;
+  const diffMs = now.getTime() - earliest.getTime();
+  const monthIndex = Math.floor(diffMs / msPerMonth) + 1;
+  return monthIndex;
+}
+
+// Get nutrition targets for current feeding month
+// referenceDate: optional date string (YYYY-MM-DD), defaults to today
+function getNutritionTargets(referenceDate) {
+  const month = getFeedingMonth(referenceDate);
+  return NUTRITION_TARGETS[month] || NUTRITION_TARGETS[Object.keys(NUTRITION_TARGETS).pop()];
+}
+
+// Get the nutrition target label for a category
+function getTargetLabel(target) {
+  if (target.customLabel) return target.label;
+  const unit = target.unit || 'g';
+  if (target.min !== undefined && target.max !== undefined) {
+    return `${target.min}~${target.max}${unit}`;
+  }
+  if (target.min !== undefined) {
+    return `≥${target.min}${unit}`;
+  }
+  return `/${unit}`;
+}
+
+// ===== State =====
+let currentYear, currentMonth, selectedDate;
+let allIngredients = [];
+let allMeals = [];
+let allRecipes = [];
+let activeTab = 'calendar';
+let ingredientStatusFilter = 'all';
+let ingredientCategoryFilter = 'all';
+
+const today = new Date();
+const todayStr = formatDate(today);
+
+function formatDate(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+// ===== Initialization =====
+async function init() {
+  try {
+    await openDB();
+
+  // Seed ingredients if empty
+  const existingIngredients = await dbGetAll('ingredients');
+  if (existingIngredients.length === 0) {
+    for (const ing of SEED_INGREDIENTS) {
+      await dbPut('ingredients', {
+        name: ing.name,
+        category: ing.category,
+        status: ing.name === '米粉/米糊' ? 'safe' : 'pending',
+        allergyDate: null,
+        retryDate: null,
+        preference: 'neutral',
+        createdAt: todayStr
+      });
+    }
+  }
+
+  // Seed recipes if empty
+  const existingRecipes = await dbGetAll('recipes');
+  if (existingRecipes.length === 0) {
+    for (const r of PRESET_RECIPES) {
+      await dbPut('recipes', {
+        name: r.name,
+        ingredients: r.ingredients,
+        category: r.category,
+        isPreset: true
+      });
+    }
+  }
+
+  await loadAllData();
+  // One-time migration: reset incorrectly auto-marked ingredients back to pending
+  // Recipe planning does NOT count as actual feeding; only manual confirmation matters.
+  let migrated = false;
+  for (const ing of allIngredients) {
+    if (ing.name !== '米粉/米糊' && ing.status === 'safe') {
+      ing.status = 'pending';
+      ing.allergyDate = null;
+      ing.retryDate = null;
+      await dbPut('ingredients', ing);
+      migrated = true;
+    }
+  }
+  if (migrated) {
+    await loadAllData();
+    console.log('🔄 已修正自动排敏数据：仅保留米粉/米糊为已排敏，其余食材重置为待添加');
+  }
+  // Ensure 米粉/米糊 is always marked as safe (already fed)
+  const riceCereal = allIngredients.find(i => i.name === '米粉/米糊');
+  if (riceCereal && riceCereal.status !== 'safe') {
+    riceCereal.status = 'safe';
+    riceCereal.allergyDate = riceCereal.allergyDate || todayStr;
+    await dbPut('ingredients', riceCereal);
+    await loadAllData();
+  }
+  currentYear = today.getFullYear();
+  currentMonth = today.getMonth();
+  selectedDate = todayStr;
+  setupTabs();
+  setupFilters();
+  // Repair: ensure all meal ingredients have corresponding entries in ingredient DB
+  await repairMissingIngredients();
+  await loadAllData();
+  renderCalendar();
+  renderDailyStats();
+  renderIngredients();
+  renderRecipes();
+  renderStats();
+  console.log('✅ 辣堡辅食日记初始化完成');
+
+  } catch (err) {
+    console.error('初始化失败:', err);
+    document.body.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:center;min-height:100vh;padding:40px;font-family:sans-serif;text-align:center;background:#FFFFFF;">
+        <div style="max-width:420px;">
+          <div style="font-size:64px;margin-bottom:16px;">😿</div>
+          <h2 style="font-size:20px;color:#333;margin-bottom:8px;">无法打开辅食日记</h2>
+          <p style="font-size:14px;color:#666;margin-bottom:20px;">浏览器无法使用本地存储功能，可能是因为：</p>
+          <ul style="text-align:left;font-size:13px;color:#666;margin-bottom:20px;list-style:none;padding:0;">
+            <li style="padding:6px 0;">🔒 当前处于<b>隐私/无痕模式</b> — 请切换到普通模式</li>
+            <li style="padding:6px 0;">🌐 浏览器<b>禁用了网站数据</b> — 请在设置中允许</li>
+            <li style="padding:6px 0;">📱 使用内置<i>WebView 预览</i> — 请用外部浏览器打开</li>
+          </ul>
+          <p style="font-size:12px;color:#999;margin-top:16px;">错误: ${err.message || err}</p>
+          <p style="font-size:12px;color:#aaa;">用 Chrome/Edge 直接打开 baby-food-diary.html</p>
+        </div>
+      </div>
+    `;
+  }
+}
+
+// ===== Meal Record Helpers =====
+async function loadAllData() {
+  allIngredients = await dbGetAll('ingredients');
+  allMeals = await dbGetAll('meals');
+  allRecipes = await dbGetAll('recipes');
+}
+
+// ===== Backup & Restore =====
+async function exportBackup() {
+  try {
+    const data = {
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      ingredients: await dbGetAll('ingredients'),
+      meals: await dbGetAll('meals'),
+      recipes: await dbGetAll('recipes')
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const now = new Date();
+    const ts = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}_${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}`;
+    a.href = url;
+    a.download = `辣堡辅食数据_${ts}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    alert(`✅ 数据已导出！\n\n食材 ${data.ingredients.length} 种\n辅食记录 ${data.meals.length} 条\n食谱 ${data.recipes.length} 个\n\n文件名：${a.download}`);
+  } catch (e) {
+    alert('❌ 导出失败：' + e.message);
+  }
+}
+
+function importBackup() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  input.onchange = async (e) => {
+    try {
+      const file = e.target.files[0];
+      if (!file) return;
+      const text = await file.text();
+      const data = JSON.parse(text);
+      
+      if (!data.ingredients || !data.meals || !data.recipes) {
+        alert('❌ 文件格式不正确，请选择有效的辅食数据备份文件');
+        return;
+      }
+
+      const totalRecords = (data.ingredients||[]).length + (data.meals||[]).length + (data.recipes||[]).length;
+      const exportedTime = data.exportedAt ? new Date(data.exportedAt).toLocaleString() : '未知';
+      const confirm = window.confirm(
+        `⚠️ 确认恢复数据？\n\n` +
+        `备份时间：${exportedTime}\n` +
+        `食材：${(data.ingredients||[]).length} 种\n` +
+        `记录：${(data.meals||[]).length} 条\n` +
+        `食谱：${(data.recipes||[]).length} 个\n\n` +
+        `⚠️ 当前数据将被完全替换！\n确认继续？`
+      );
+      if (!confirm) return;
+
+      // Clear existing data
+      await clearStore('ingredients');
+      await clearStore('meals');
+      await clearStore('recipes');
+
+      // Import data
+      for (const ing of (data.ingredients || [])) {
+        await dbPut('ingredients', ing);
+      }
+      for (const meal of (data.meals || [])) {
+        await dbPut('meals', meal);
+      }
+      for (const recipe of (data.recipes || [])) {
+        await dbPut('recipes', recipe);
+      }
+
+      await loadAllData();
+      renderCalendar();
+      renderDailyStats();
+      renderIngredients();
+      renderRecipes();
+      renderStats();
+      alert(`✅ 数据恢复成功！\n食材 ${allIngredients.length} 种 | 记录 ${allMeals.length} 条 | 食谱 ${allRecipes.length} 个`);
+    } catch (e) {
+      alert('❌ 恢复失败：' + e.message);
+    }
+  };
+  input.click();
+}
+
+function clearStore(storeName) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(storeName, 'readwrite');
+    const store = tx.objectStore(storeName);
+    const req = store.clear();
+    req.onsuccess = () => resolve();
+    req.onerror = () => reject(req.error);
+  });
+}
+
+// ===== Tabs =====
+function setupTabs() {
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      activeTab = tab.dataset.tab;
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      document.querySelectorAll('.panel-content').forEach(p => p.classList.remove('active'));
+      document.getElementById('panel-' + activeTab).classList.add('active');
+      if (activeTab === 'ingredients') renderIngredients();
+      if (activeTab === 'recipes') renderRecipes();
+      if (activeTab === 'stats') renderStats();
+      if (activeTab === 'calendar') {
+        renderCalendar();
+        renderDailyStats();
+      }
+    });
+  });
+}
+
+// ===== Calendar =====
+function renderCalendar() {
+  currentMonth = currentMonth; // keep in range
+  if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+  if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+
+  const monthNames = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
+  document.getElementById('calendarMonth').textContent = `${currentYear}年 ${monthNames[currentMonth]}`;
+
+  const firstDay = new Date(currentYear, currentMonth, 1);
+  const lastDay = new Date(currentYear, currentMonth + 1, 0);
+  const startDayOfWeek = firstDay.getDay();
+  const daysInMonth = lastDay.getDate();
+
+  const grid = document.getElementById('calendarGrid');
+  grid.innerHTML = '';
+
+  const dayHeaders = ['日', '一', '二', '三', '四', '五', '六'];
+  dayHeaders.forEach(d => {
+    const el = document.createElement('div');
+    el.className = 'calendar-day-header';
+    el.textContent = d;
+    grid.appendChild(el);
+  });
+
+  // Previous month fill
+  const prevLastDay = new Date(currentYear, currentMonth, 0).getDate();
+  for (let i = startDayOfWeek - 1; i >= 0; i--) {
+    const day = prevLastDay - i;
+    const m = currentMonth === 0 ? 11 : currentMonth - 1;
+    const y = currentMonth === 0 ? currentYear - 1 : currentYear;
+    const dateStr = `${y}-${String(m+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    grid.appendChild(createDayCell(day, dateStr, true));
+  }
+
+  // Current month
+  for (let day = 1; day <= daysInMonth; day++) {
+    const dateStr = `${currentYear}-${String(currentMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    grid.appendChild(createDayCell(day, dateStr, false));
+  }
+
+  // Next month fill
+  const totalCells = startDayOfWeek + daysInMonth;
+  const remaining = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
+  for (let day = 1; day <= remaining; day++) {
+    const m = currentMonth === 11 ? 0 : currentMonth + 1;
+    const y = currentMonth === 11 ? currentYear + 1 : currentYear;
+    const dateStr = `${y}-${String(m+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    grid.appendChild(createDayCell(day, dateStr, true));
+  }
+}
+
+function createDayCell(day, dateStr, isOtherMonth) {
+  const div = document.createElement('div');
+  div.className = 'calendar-day';
+  if (isOtherMonth) div.classList.add('other-month');
+  if (dateStr === todayStr) div.classList.add('today');
+  if (dateStr === selectedDate) div.classList.add('selected');
+
+  const dayOfWeek = new Date(dateStr).getDay();
+  if (dayOfWeek === 0 || dayOfWeek === 6) div.classList.add('weekend');
+
+  const numSpan = document.createElement('span');
+  numSpan.className = 'day-num';
+  numSpan.textContent = day;
+  div.appendChild(numSpan);
+
+  // Show 4 fixed meal slots
+  const dayMeals = allMeals.filter(m => m.date === dateStr).sort((a, b) => a.mealNumber - b.mealNumber);
+  const tagsDiv = document.createElement('div');
+  tagsDiv.className = 'meal-tags';
+  for (let slot = 1; slot <= 4; slot++) {
+    const meal = dayMeals.find(m => m.mealNumber === slot);
+    if (!meal) continue;
+    const tag = document.createElement('div');
+    tag.className = 'meal-tag';
+    // Check if any ingredient in this meal is first-time (only appears on or after dateStr)
+    const ingListHtml = (meal.ingredients || []).map(i => {
+      const shortName = i.name.length > 2 ? i.name.slice(0, 2) : i.name;
+      const ing = allIngredients.find(ig => ig.name === i.name);
+      const weight = i.weight ? i.weight : '';
+      // Bold only if: pending AND this is the first day this ingredient appears
+      const isFirstTime = ing && ing.status === 'pending' && isFirstTimeIngredient(i.name, dateStr);
+      return isFirstTime
+        ? `<strong>${escapeHtml(shortName)}${weight}</strong>`
+        : `${escapeHtml(shortName)}${weight}`;
+    }).join('+');
+    tag.innerHTML = '• ' + ingListHtml;
+    tag.title = (meal.ingredients || []).map(i => i.name + (i.weight ? i.weight+'g' : '')).join('、');
+    tagsDiv.appendChild(tag);
+  }
+  div.appendChild(tagsDiv);
+
+  // Single-click: update nutrition stats; Double-click: open meal edit modal
+  let clickTimer = null;
+  div.addEventListener('click', (e) => {
+    if (clickTimer) {
+      // Double-click detected
+      clearTimeout(clickTimer);
+      clickTimer = null;
+      selectedDate = dateStr;
+      document.querySelectorAll('.calendar-day.selected').forEach(d => d.classList.remove('selected'));
+      div.classList.add('selected');
+      openDayModal(dateStr);
+      renderDailyStats();
+      renderCalendar();
+      return;
+    }
+    // Single-click: wait a bit to distinguish from double-click
+    clickTimer = setTimeout(() => {
+      clickTimer = null;
+      selectedDate = dateStr;
+      document.querySelectorAll('.calendar-day.selected').forEach(d => d.classList.remove('selected'));
+      div.classList.add('selected');
+      renderDailyStats();
+      renderCalendar();
+    }, 280);
+  });
+
+  return div;
+}
+
+function prevMonth() {
+  currentMonth--;
+  if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+  renderCalendar();
+}
+
+function nextMonth() {
+  currentMonth++;
+  if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+  renderCalendar();
+}
+
+function goToday() {
+  currentYear = today.getFullYear();
+  currentMonth = today.getMonth();
+  selectedDate = todayStr;
+  renderCalendar();
+  renderDailyStats();
+}
+
+// ===== Day Modal (was Day Detail) =====
+let _editMealId = null;
+
+function openDayModal(dateStr) {
+  selectedDate = dateStr;
+  _editMealId = null;
+  window._selectedMealIngredients = {};
+
+  const dayMeals = allMeals.filter(m => m.date === dateStr).sort((a,b) => a.mealNumber - b.mealNumber);
+  const d = new Date(dateStr);
+  const weekDays = ['日', '一', '二', '三', '四', '五', '六'];
+  const titleDate = `${d.getMonth()+1}月${d.getDate()}日 星期${weekDays[d.getDay()]}`;
+
+  // Build 4 meal slots (no meal name displayed)
+  let slotsHtml = '';
+  for (let slot = 1; slot <= 4; slot++) {
+    const meal = dayMeals.find(m => m.mealNumber === slot);
+    if (meal) {
+      const ingHtml = (meal.ingredients || []).map(i => {
+        const ing = allIngredients.find(ig => ig.name === i.name);
+        const isFirst = ing && ing.status === 'pending' && isFirstTimeIngredient(i.name, dateStr);
+        return isFirst
+          ? `<strong>${escapeHtml(i.name)} ${i.weight}${i.unit||'g'}</strong>`
+          : `${escapeHtml(i.name)} ${i.weight}${i.unit||'g'}`;
+      }).join('、');
+      slotsHtml += `<div class="meal-row has-meal" draggable="true" data-meal-id="${meal.id}" data-slot="${slot}" onclick="handleMealRowClick(event,${meal.id},${slot})" ondragstart="handleDragStart(event,this)" ondragover="handleDragOver(event,this)" ondrop="handleDrop(event,this,'${dateStr}')" ondragend="handleDragEnd(event,this)" ondragleave="handleDragLeave(event,this)">` +
+        `<span class="meal-slot-label">🍽️第${slot}顿</span>` +
+        `<span class="meal-slot-content">${ingHtml}</span>` +
+        `<span class="meal-slot-action">✏️</span>` +
+      `</div>` +
+      `<div class="inline-meal-form" id="inlineForm${slot}"></div>`;
+    } else {
+      slotsHtml += `<div class="meal-row" onclick="openAddMealInline(${slot})" style="cursor:pointer;">
+        <span class="meal-slot-label">🍽️第${slot}顿</span>
+        <span class="meal-slot-content empty">点击添加辅食</span>
+        <span class="meal-slot-action">+</span>
+      </div>
+      <div class="inline-meal-form" id="inlineForm${slot}"></div>`;
+    }
+  }
+
+  // Build daily stats summary for modal
+  const statsHtml = buildDailyStatsHtml(dateStr);
+
+  const modal = document.getElementById('modalContainer');
+  modal.innerHTML = `
+    <div class="modal-overlay" onclick="if(event.target===this)closeModal()">
+      <div class="modal" style="max-width:580px;max-height:85vh;overflow-y:auto;">
+        <h3>${titleDate} 辅食记录</h3>
+        <!-- Recipe search + copy -->
+        <div style="display:flex;gap:10px;align-items:center;margin-bottom:12px;">
+          <div style="position:relative;flex:0 1 320px;">
+            <input type="text" class="form-input" id="dayRecipeSearch" placeholder="🔍 搜索食谱快速导入..."
+              oninput="onDayRecipeSearch('${dateStr}')" autocomplete="off"
+              style="font-size:13px;padding:8px 12px;">
+            <div id="dayRecipeResults" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:60;background:white;border:2px solid var(--gray-300);border-radius:var(--radius-sm);box-shadow:var(--shadow-lg);max-height:200px;overflow-y:auto;"></div>
+          </div>
+          <button class="btn btn-outline btn-sm" onclick="showCopyMealDialog('${dateStr}')" style="white-space:nowrap;flex-shrink:0;">复制食谱</button>
+        </div>
+        <div style="margin-top:12px;">${slotsHtml}</div>
+        ${statsHtml}
+        <div style="text-align:center;margin-top:14px;display:flex;gap:8px;justify-content:center;">
+          <button class="btn btn-outline btn-sm" onclick="showClearForDate('${dateStr}')" style="color:var(--danger);border-color:var(--danger);">清除</button>
+          <button class="btn btn-sm" onclick="closeModal()" style="background:var(--black);color:white;border-color:var(--black);">关闭</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// Drag & Drop handlers for meal rows
+let _dragSrcMealId = null;
+let _dragSrcSlot = null;
+
+function handleMealRowClick(event, mealId, slot) {
+  // Don't trigger click if we're in the middle of a drag
+  if (_dragSrcMealId !== null) return;
+  openEditMealInline(mealId, slot);
+}
+
+function handleDragStart(event, el) {
+  _dragSrcMealId = parseInt(el.dataset.mealId);
+  _dragSrcSlot = parseInt(el.dataset.slot);
+  el.classList.add('dragging');
+  event.dataTransfer.effectAllowed = 'move';
+  event.dataTransfer.setData('text/plain', _dragSrcMealId);
+}
+
+function handleDragOver(event, el) {
+  event.preventDefault();
+  event.dataTransfer.dropEffect = 'move';
+  if (parseInt(el.dataset.mealId) !== _dragSrcMealId) {
+    el.classList.add('drag-over');
+  }
+}
+
+function handleDragLeave(event, el) {
+  el.classList.remove('drag-over');
+}
+
+function handleDragEnd(event, el) {
+  el.classList.remove('dragging');
+  document.querySelectorAll('.meal-row').forEach(r => r.classList.remove('drag-over'));
+  _dragSrcMealId = null;
+  _dragSrcSlot = null;
+}
+
+async function handleDrop(event, el, dateStr) {
+  event.preventDefault();
+  el.classList.remove('drag-over');
+  const targetMealId = parseInt(el.dataset.mealId);
+  const targetSlot = parseInt(el.dataset.slot);
+
+  if (_dragSrcMealId === null || _dragSrcMealId === targetMealId) return;
+
+  const srcMeal = allMeals.find(m => m.id === _dragSrcMealId);
+  const targetMeal = allMeals.find(m => m.id === targetMealId);
+  if (!srcMeal || !targetMeal) return;
+
+  // Swap meal numbers
+  const srcMealNumber = srcMeal.mealNumber;
+  srcMeal.mealNumber = targetMeal.mealNumber;
+  targetMeal.mealNumber = srcMealNumber;
+
+  await dbPut('meals', srcMeal);
+  await dbPut('meals', targetMeal);
+  await loadAllData();
+  openDayModal(dateStr);
+  renderCalendar();
+  renderDailyStats();
+}
+
+// Recipe fuzzy search in day modal
+function onDayRecipeSearch(dateStr) {
+  const input = document.getElementById('dayRecipeSearch');
+  const resultsDiv = document.getElementById('dayRecipeResults');
+  if (!input || !resultsDiv) return;
+
+  const q = input.value.trim().toLowerCase();
+  if (!q) {
+    resultsDiv.style.display = 'none';
+    return;
+  }
+
+  // Fuzzy match recipes
+  const matches = allRecipes.filter(r => {
+    const nameMatch = r.name.toLowerCase().includes(q);
+    const ingMatch = (r.ingredients || []).some(ing => ing.name.toLowerCase().includes(q));
+    return nameMatch || ingMatch;
+  });
+
+  if (matches.length === 0) {
+    resultsDiv.style.display = 'block';
+    resultsDiv.innerHTML = '<div style="padding:10px;color:var(--gray-400);font-size:13px;text-align:center;">未找到匹配的食谱</div>';
+    return;
+  }
+
+  resultsDiv.style.display = 'block';
+  resultsDiv.innerHTML = matches.map(r => `
+    <div onclick="importRecipeToDay('${dateStr}', ${r.id})"
+      style="padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--gray-100);font-size:13px;transition:background 0.1s;"
+      onmouseover="this.style.background='var(--primary-light)'"
+      onmouseout="this.style.background=''">
+      🍲 <strong>${escapeHtml(r.name)}</strong>
+      <span style="color:var(--gray-400);font-size:11px;margin-left:8px;">${(r.ingredients||[]).map(i=>i.name).join('、')}</span>
+    </div>
+  `).join('');
+}
+
+// Import recipe into a day's next available meal slot
+async function importRecipeToDay(dateStr, recipeId) {
+  const recipe = allRecipes.find(r => r.id === recipeId);
+  if (!recipe) return;
+
+  const dayMeals = allMeals.filter(m => m.date === dateStr);
+  if (dayMeals.length >= 4) {
+    alert('⚠️ 该日期已有4顿辅食记录，无法再添加（每日最多4顿）');
+    return;
+  }
+  const nextMealNumber = dayMeals.length + 1;
+
+  const ingredients = (recipe.ingredients || []).map(ing => ({
+    name: ing.name,
+    weight: ing.weight,
+    unit: ing.unit || 'g'
+  }));
+
+  await dbPut('meals', {
+    date: dateStr,
+    mealNumber: nextMealNumber,
+    mealName: recipe.name,
+    ingredients,
+    notes: `来自食谱: ${recipe.name}`,
+    recipeId: recipe.id,
+    createdAt: new Date().toISOString()
+  });
+
+  await loadAllData();
+  // Clear search
+  document.getElementById('dayRecipeSearch').value = '';
+  document.getElementById('dayRecipeResults').style.display = 'none';
+  // Refresh modal
+  openDayModal(dateStr);
+  renderDailyStats();
+  renderCalendar();
+}
+
+// Copy meal from one date/slot to another
+function showCopyMealDialog(targetDateStr) {
+  const modal = document.getElementById('modalContainer');
+  
+  // Only show meals from the selected date (targetDateStr)
+  const sourceMeals = allMeals.filter(m => m.date === targetDateStr && m.ingredients && m.ingredients.length > 0).sort((a,b) => a.mealNumber - b.mealNumber);
+  
+  if (sourceMeals.length === 0) {
+    alert('⚠️ 当天还没有辅食记录，无法复制');
+    return;
+  }
+
+  // Generate target date options (next 30 days, plus today)
+  const targetDates = [];
+  const today = new Date();
+  for (let i = 0; i <= 30; i++) {
+    const d = new Date(today);
+    d.setDate(d.getDate() + i);
+    const ds = d.toISOString().slice(0, 10);
+    targetDates.push(ds);
+  }
+
+  const defaultTarget = targetDateStr || targetDates[0];
+  const sourceOptions = sourceMeals.map(m => {
+    const ingText = (m.ingredients || []).map(i => `${i.name} ${i.weight}${i.unit||'g'}`).join('、');
+    return `<option value="${m.id}">第${m.mealNumber}顿: ${ingText}</option>`;
+  }).join('');
+
+  const targetDateOptions = targetDates.map(ds => {
+    const d = new Date(ds);
+    const label = ds === targetDateStr ? `${ds} (${d.getMonth()+1}/${d.getDate()}) - 当前日期` : `${ds} (${d.getMonth()+1}/${d.getDate()})`;
+    const sel = ds === defaultTarget ? ' selected' : '';
+    return `<option value="${ds}"${sel}>${label}</option>`;
+  }).join('');
+
+  modal.innerHTML = `
+    <div class="modal-overlay" onclick="if(event.target===this)closeCopyAndReturn('${targetDateStr}')">
+      <div class="modal" style="max-width:500px;max-height:85vh;overflow-y:auto;">
+        <h3>复制食谱</h3>
+        <div class="form-group">
+          <label class="form-label">源食谱（选择当天已记录的某顿）</label>
+          <select id="copySourceMeal" class="form-select" style="width:100%;font-size:13px;">
+            ${sourceOptions}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">复制到</label>
+          <div style="display:flex;gap:10px;align-items:center;">
+            <select id="copyTargetDate" class="form-select" style="flex:1;font-size:13px;">
+              ${targetDateOptions}
+            </select>
+            <select id="copyTargetSlot" class="form-select" style="width:100px;font-size:13px;">
+              <option value="1">第1顿</option>
+              <option value="2">第2顿</option>
+              <option value="3">第3顿</option>
+              <option value="4">第4顿</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px;">
+          <button class="btn btn-outline btn-sm" onclick="closeCopyAndReturn('${targetDateStr}')">取消</button>
+          <button class="btn btn-sm" onclick="executeCopyMeal('${targetDateStr}')" style="background:var(--black);color:white;border-color:var(--black);">确认复制</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function closeCopyAndReturn(dateStr) {
+  closeModal();
+  openDayModal(dateStr);
+  renderDailyStats();
+  renderCalendar();
+}
+
+async function executeCopyMeal(returnToDate) {
+  const sourceId = parseInt(document.getElementById('copySourceMeal').value);
+  const targetDate = document.getElementById('copyTargetDate').value;
+  const targetSlot = parseInt(document.getElementById('copyTargetSlot').value);
+
+  const sourceMeal = allMeals.find(m => m.id === sourceId);
+  if (!sourceMeal) { alert('源食谱不存在'); return; }
+
+  // Check if target slot already has a meal
+  const existingMeal = allMeals.find(m => m.date === targetDate && m.mealNumber === targetSlot);
+
+  if (existingMeal) {
+    // Replace modal with inline confirmation (avoid window.confirm which is blocked in WebView)
+    const exIngText = (existingMeal.ingredients || []).map(i => i.name + ' ' + i.weight + (i.unit || 'g')).join('、');
+    const modal = document.getElementById('modalContainer');
+    modal.innerHTML = `
+      <div class="modal-overlay" onclick="if(event.target===this)closeCopyAndReturn('${returnToDate}')">
+        <div class="modal" style="max-width:440px;">
+          <div style="text-align:center;padding:16px;">
+            <div style="font-size:16px;font-weight:700;color:var(--danger);margin-bottom:10px;">覆盖确认</div>
+            <div style="font-size:13px;color:var(--gray-600);margin-bottom:6px;">${targetDate} 的第${targetSlot}顿已有记录：</div>
+            <div style="font-size:13px;color:var(--black);background:var(--gray-50);padding:8px 12px;border-radius:8px;margin-bottom:14px;">${escapeHtml(exIngText)}</div>
+            <div style="font-size:13px;color:var(--gray-600);margin-bottom:16px;">是否覆盖为新食谱？</div>
+            <div style="display:flex;gap:8px;justify-content:center;">
+              <button class="btn btn-outline btn-sm" onclick="closeCopyAndReturn('${returnToDate}')">取消</button>
+              <button class="btn btn-danger btn-sm" onclick="doExecuteCopyMeal(${sourceId},'${targetDate}',${targetSlot},${existingMeal.id},'${returnToDate}')">确认覆盖</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  await doExecuteCopyMeal(sourceId, targetDate, targetSlot, null, returnToDate);
+}
+
+async function doExecuteCopyMeal(sourceId, targetDate, targetSlot, existingMealId, returnToDate) {
+  try {
+    const sourceMeal = allMeals.find(m => m.id === sourceId);
+    if (!sourceMeal) { alert('源食谱不存在'); return; }
+
+    // Delete existing meal if overwriting
+    if (existingMealId) {
+      await dbDelete('meals', existingMealId);
+    }
+
+    // Copy ingredients
+    const ingredients = (sourceMeal.ingredients || []).map(ing => ({
+      name: ing.name,
+      weight: ing.weight,
+      unit: ing.unit || 'g'
+    }));
+
+    await dbPut('meals', {
+      date: targetDate,
+      mealNumber: targetSlot,
+      mealName: sourceMeal.mealName || null,
+      ingredients,
+      notes: sourceMeal.notes || null,
+      createdAt: new Date().toISOString()
+    });
+
+    await loadAllData();
+    closeCopyAndReturn(returnToDate);
+  } catch (err) {
+    console.error('复制食谱失败:', err);
+    alert('复制失败，请重试: ' + err.message);
+  }
+}
+
+function buildDailyStatsHtml(dateStr) {
+  const dayMeals = allMeals.filter(m => m.date === dateStr);
+  if (dayMeals.length === 0) return '<div style="text-align:center;color:var(--gray-400);font-size:13px;margin-top:12px;">暂无今日营养统计</div>';
+
+  const totals = {};
+  dayMeals.forEach(meal => {
+    (meal.ingredients || []).forEach(ing => {
+      const ingredient = allIngredients.find(i => i.name === ing.name);
+      const cat = ingredient ? ingredient.category : '其他';
+      totals[cat] = (totals[cat] || 0) + (ing.weight || 0);
+    });
+  });
+
+  const feedingMonth = getFeedingMonth(dateStr);
+  const targets = getNutritionTargets(dateStr);
+
+  const categories = [
+    { key: '谷类', emoji: '🥯' },
+    { key: '蔬菜', emoji: '🥬' },
+    { key: '水果', emoji: '🍎' },
+    { key: '肉类', emoji: '🥩' },
+    { key: '水产', emoji: '🐟' },
+    { key: '蛋类', emoji: '🥚' },
+    { key: '油脂', emoji: '🧈' },
+    { key: '其他', emoji: '🧀' },
+  ];
+
+  let html = `<div style="background:var(--gray-50);border-radius:var(--radius-sm);padding:12px;margin-top:16px;"><h4 style="font-size:14px;margin-bottom:10px;">今日营养摄入 <span style="font-size:11px;color:var(--primary);font-weight:400;">（第${feedingMonth}个月目标）</span></h4><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;">`;
+
+  categories.forEach(cat => {
+    const val = totals[cat.key] || 0;
+    const target = targets[cat.key] || {};
+    const minT = target.min !== undefined ? target.min : null;
+    const maxT = target.max !== undefined ? target.max : null;
+    const hasTarget = target.min !== undefined || target.max !== undefined;
+    const hasMax = target.max !== undefined;
+    const isCustom = target.customLabel === true;
+
+    let targetLabel = getTargetLabel(target);
+
+    let status = '';
+    if (hasTarget && !isCustom) {
+      if (val === 0) status = '<span style="color:var(--gray-400);font-size:11px;">未摄入</span>';
+      else if (minT !== null && val < minT) status = '<span style="color:var(--warning);font-size:11px;">不足</span>';
+      else if (hasMax && val > maxT) status = '<span style="color:var(--danger);font-size:11px;">过量</span>';
+      else status = '<span style="color:var(--success);font-size:11px;">✓ 达标</span>';
+    } else if (hasTarget && isCustom) {
+      if (val === 0) status = '<span style="color:var(--gray-400);font-size:11px;">未摄入</span>';
+      else status = '<span style="color:var(--success);font-size:11px;">✓ 已摄入</span>';
+    } else {
+      if (val === 0) status = '<span style="color:var(--gray-400);font-size:11px;">未摄入</span>';
+      else status = '<span style="color:var(--info);font-size:11px;">已摄入</span>';
+    }
+
+    const unit = cat.key === '油脂' ? '滴' : 'g';
+    html += `<div style="background:white;border-radius:6px;padding:8px;text-align:center;">
+      <div>${cat.emoji} ${cat.key}</div>
+      <div style="font-size:18px;font-weight:700;">${val}${unit}</div>
+      <div style="font-size:11px;color:var(--gray-400);margin-top:2px;">${targetLabel}</div>
+      ${status}
+    </div>`;
+  });
+
+  html += '</div></div>';
+  return html;
+}
+
+// ===== Inline Meal Form =====
+function openAddMealInline(slot) {
+  _editMealId = null;
+  window._selectedMealIngredients = {};
+  buildInlineForm(slot, null, null, null);
+}
+
+function openEditMealInline(id, slot) {
+  _editMealId = id;
+  const meal = allMeals.find(m => m.id === id);
+  if (!meal) return;
+  window._selectedMealIngredients = {};
+  (meal.ingredients || []).forEach(ing => {
+    const ingredient = allIngredients.find(i => i.name === ing.name);
+    const key = ingredient ? ingredient.id : Math.random();
+    window._selectedMealIngredients[key] = { id: key, name: ing.name, weight: ing.weight, unit: ing.unit || 'g' };
+  });
+  buildInlineForm(slot, meal.mealName, meal.notes, meal.id);
+}
+
+function buildInlineForm(slot, mealName, notes, editId) {
+  // Close all other open forms first
+  document.querySelectorAll('.inline-meal-form.open').forEach(f => { f.classList.remove('open'); f.innerHTML = ''; });
+
+  const form = document.getElementById('inlineForm' + slot);
+  if (!form) return;
+  form.classList.add('open');
+
+  const safeIngredients = allIngredients.filter(i => i.status === 'safe' || i.status === 'pending');
+  const ingredientOptions = safeIngredients.map(ing => {
+    const catInfo = INGREDIENT_CATEGORIES[ing.category] || { emoji: '📦' };
+    const selected = window._selectedMealIngredients[ing.id] ? ' selected' : '';
+    const statusBadge = ing.status === 'pending'
+      ? '<span style="color:var(--warning);font-size:11px;">⚠新</span>'
+      : (ing.status === 'safe' ? '<span style="color:var(--success);font-size:11px;">✓</span>' : '<span style="color:var(--danger);font-size:11px;">✕</span>');
+    return `<div class="ingredient-select-item${selected}" data-id="${ing.id}" data-name="${escapeHtml(ing.name)}" data-cat="${ing.category}" onclick="toggleIngredientSelect(this)">
+      <span>${catInfo.emoji} ${escapeHtml(ing.name)} <span style="font-size:11px;color:var(--gray-400)">${ing.category}</span></span>
+      ${statusBadge}
+    </div>`;
+  }).join('');
+
+  form.innerHTML = `
+    <div style="font-weight:700;font-size:14px;margin-bottom:10px;">第${slot}顿 ${editId ? '(编辑中)' : '(新增)'}</div>
+    <div class="form-group">
+      <label class="form-label">选择食材（点击选择，输入重量）</label>
+      <div class="ingredient-select-list">${ingredientOptions}</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">已选食材</label>
+      <div class="selected-ingredients" id="selectedIngredients"></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">备注（可选）</label>
+      <input class="form-input" id="mealNotes" value="${escapeHtml(notes || '')}" placeholder="例如：宝宝很喜欢">
+    </div>
+    <div class="form-actions">
+      ${editId ? `<button class="btn btn-danger btn-sm" onclick="confirmDeleteMeal(${editId})">删除</button>` : ''}
+      <button class="btn btn-outline btn-sm" onclick="closeInlineForm()">取消</button>
+      <button class="btn btn-sm" onclick="${editId ? `updateMealInline(${editId}, ${slot})` : `saveMealInline(${slot})`}" style="background:var(--black);color:white;border-color:var(--black);">保存</button>
+    </div>
+  `;
+  renderSelectedIngredients();
+}
+
+function closeInlineForm() {
+  document.querySelectorAll('.inline-meal-form.open').forEach(f => { f.classList.remove('open'); f.innerHTML = ''; });
+  _editMealId = null;
+  window._selectedMealIngredients = {};
+}
+
+async function saveMealInline(slot) {
+  const notes = document.getElementById('mealNotes').value.trim();
+  const ingredients = Object.values(window._selectedMealIngredients).map(i => ({
+    name: i.name, weight: i.weight, unit: i.unit
+  }));
+  if (ingredients.length === 0) { alert('请至少选择一种食材'); return; }
+
+  await dbPut('meals', {
+    date: selectedDate, mealNumber: slot,
+    mealName: null, ingredients,
+    notes: notes || null, createdAt: new Date().toISOString()
+  });
+
+  await loadAllData();
+  closeInlineForm();
+  renderCalendar();
+  renderDailyStats();
+  openDayModal(selectedDate);
+}
+
+async function updateMealInline(id, slot) {
+  const meal = allMeals.find(m => m.id === id);
+  if (!meal) return;
+  meal.notes = document.getElementById('mealNotes').value.trim() || null;
+  meal.ingredients = Object.values(window._selectedMealIngredients).map(i => ({
+    name: i.name, weight: i.weight, unit: i.unit
+  }));
+  if (meal.ingredients.length === 0) { alert('请至少选择一种食材'); return; }
+
+  await dbPut('meals', meal);
+  await loadAllData();
+  closeInlineForm();
+  renderCalendar();
+  renderDailyStats();
+  openDayModal(selectedDate);
+}
+
+// ===== Delete Meal (inline) =====
+function confirmDeleteMeal(id) {
+  // Replace the current form content with a confirmation prompt
+  // Find which form is open
+  const openForm = document.querySelector('.inline-meal-form.open');
+  if (!openForm) return;
+
+  const slot = parseInt(openForm.id.replace('inlineForm', ''));
+  openForm.innerHTML = `
+    <div style="background:var(--danger-light);border:1px solid var(--danger);border-radius:var(--radius-sm);padding:16px;text-align:center;">
+      <div style="font-size:16px;font-weight:700;color:var(--danger);margin-bottom:8px;">确认删除</div>
+      <div style="font-size:13px;color:var(--gray-600);margin-bottom:14px;">确定要删除这顿辅食记录吗？<br>删除后无法恢复。</div>
+      <div style="display:flex;gap:8px;justify-content:center;">
+        <button class="btn btn-outline btn-sm" onclick="openEditMealInline(${id},${slot})">取消</button>
+        <button class="btn btn-danger btn-sm" onclick="doDeleteMeal(${id})">确认删除</button>
+      </div>
+    </div>
+  `;
+}
+
+async function doDeleteMeal(id) {
+  try {
+    await dbDelete('meals', id);
+    await loadAllData();
+    document.querySelectorAll('.inline-meal-form.open').forEach(f => { f.classList.remove('open'); f.innerHTML = ''; });
+    _editMealId = null;
+    window._selectedMealIngredients = {};
+    renderCalendar();
+    renderDailyStats();
+    openDayModal(selectedDate);
+  } catch (err) {
+    console.error('删除失败:', err);
+    alert('删除失败，请重试: ' + err.message);
+  }
+}
+
+// ===== Clear Meal Options (3 modes) =====
+function showClearOptions() {
+  const modal = document.getElementById('modalContainer');
+  modal.innerHTML = `
+    <div class="modal-overlay" onclick="if(event.target===this)closeModal()">
+      <div class="modal" style="max-width:400px;text-align:center;">
+        <h3>清除辅食记录</h3>
+        <p style="font-size:13px;color:var(--gray-600);margin:12px 0;">请选择清除范围：</p>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <button class="btn btn-danger" style="width:100%;padding:12px;" onclick="clearAllMeals()">
+            🗑️ 清除全部记录（${allMeals.length} 条）
+          </button>
+          <button class="btn btn-outline" style="width:100%;padding:12px;color:var(--danger);border-color:var(--danger);" onclick="clearTodayMeals()">
+            📅 仅删除今日记录
+          </button>
+          <button class="btn btn-outline" style="width:100%;padding:12px;" onclick="showClearDatePicker()">
+            🗓️ 选择日期删除...
+          </button>
+        </div>
+        <div style="margin-top:16px;">
+          <button class="btn btn-outline btn-sm" onclick="closeModal()">取消</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function showClearForDate(dateStr) {
+  const dayMeals = allMeals.filter(m => m.date === dateStr);
+  const modal = document.getElementById('modalContainer');
+  modal.innerHTML = `
+    <div class="modal-overlay" onclick="if(event.target===this)closeModal()">
+      <div class="modal" style="max-width:380px;text-align:center;">
+        <h3>清除 ${dateStr} 的辅食</h3>
+        <p style="font-size:14px;margin:12px 0;">该日期共有 <strong style="color:var(--danger);">${dayMeals.length}</strong> 顿辅食记录。</p>
+        <p style="color:var(--danger);font-weight:700;font-size:13px;">此操作不可恢复，确定要清除吗？</p>
+        <div class="form-actions" style="justify-content:center;margin-top:16px;">
+          <button class="btn btn-outline btn-sm" onclick="openDayModal('${dateStr}')">取消</button>
+          <button class="btn btn-danger btn-sm" onclick="doClearDate('${dateStr}')">确认清除</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function showClearDatePicker() {
+  closeModal();
+  const modal = document.getElementById('modalContainer');
+  modal.innerHTML = `
+    <div class="modal-overlay" onclick="if(event.target===this)closeModal()">
+      <div class="modal" style="max-width:360px;">
+        <h3>选择要清除的日期</h3>
+        <div class="form-group">
+          <input type="date" class="form-input" id="clearDatePicker" value="${todayStr}">
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-outline btn-sm" onclick="closeModal()">取消</button>
+          <button class="btn btn-danger btn-sm" onclick="doClearDatePicker()">清除该日</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+async function doClearDatePicker() {
+  const d = document.getElementById('clearDatePicker');
+  if (!d || !d.value) return;
+  await doClearDate(d.value);
+}
+
+async function clearTodayMeals() {
+  const todayMeals = allMeals.filter(m => m.date === todayStr);
+  if (todayMeals.length === 0) { closeModal(); alert('今日暂无辅食记录'); return; }
+  const modal = document.getElementById('modalContainer');
+  modal.innerHTML = `
+    <div class="modal-overlay" onclick="if(event.target===this)closeModal()">
+      <div class="modal" style="max-width:380px;text-align:center;">
+        <h3>清除今日辅食</h3>
+        <p style="font-size:14px;margin:12px 0;">今日共有 <strong style="color:var(--danger);">${todayMeals.length}</strong> 顿辅食记录。</p>
+        <p style="color:var(--danger);font-weight:700;font-size:13px;">确定要清除今日所有记录吗？</p>
+        <div class="form-actions" style="justify-content:center;margin-top:16px;">
+          <button class="btn btn-outline btn-sm" onclick="closeModal()">取消</button>
+          <button class="btn btn-danger btn-sm" onclick="doClearDate('${todayStr}')">确认清除</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+async function clearAllMeals() {
+  const modal = document.getElementById('modalContainer');
+  modal.innerHTML = `
+    <div class="modal-overlay" onclick="if(event.target===this)closeModal()">
+      <div class="modal" style="max-width:400px;text-align:center;">
+        <h3>清除所有辅食记录</h3>
+        <p style="font-size:14px;margin:12px 0;">当前共有 <strong style="color:var(--danger);">${allMeals.length}</strong> 条辅食记录。</p>
+        <p style="color:var(--danger);font-weight:700;font-size:13px;">此操作不可恢复，确定要清除吗？</p>
+        <div class="form-actions" style="justify-content:center;margin-top:16px;">
+          <button class="btn btn-outline btn-sm" onclick="closeModal()">取消</button>
+          <button class="btn btn-danger btn-sm" onclick="doClearAll()">确认清除全部</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+async function doClearAll() {
+  try {
+    const db = await openDB();
+    const tx = db.transaction('meals', 'readwrite');
+    await new Promise((resolve, reject) => {
+      const req = tx.objectStore('meals').clear();
+      req.onsuccess = () => resolve();
+      req.onerror = () => reject(req.error);
+    });
+    await loadAllData();
+    closeModal();
+    selectedDate = todayStr;
+    renderCalendar();
+    renderDailyStats();
+  } catch (err) {
+    console.error('清除失败:', err);
+    alert('清除失败: ' + err.message);
+  }
+}
+
+async function doClearDate(dateStr) {
+  try {
+    const db = await openDB();
+    const tx = db.transaction('meals', 'readwrite');
+    const dayMeals = allMeals.filter(m => m.date === dateStr);
+    for (const meal of dayMeals) {
+      tx.objectStore('meals').delete(meal.id);
+    }
+    await new Promise((resolve, reject) => {
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+    await loadAllData();
+    closeModal();
+    if (dateStr === selectedDate) { selectedDate = todayStr; }
+    renderCalendar();
+    renderDailyStats();
+  } catch (err) {
+    console.error('清除失败:', err);
+    alert('清除失败: ' + err.message);
+  }
+}
+
+// ===== Daily Nutrition Stats (page-level, shown under calendar) =====
+function renderDailyStats() {
+  const statsDiv = document.getElementById('dailyStats');
+  if (!statsDiv || !selectedDate) return;
+
+  const dayMeals = allMeals.filter(m => m.date === selectedDate);
+  if (dayMeals.length === 0) {
+    statsDiv.style.display = 'none';
+    return;
+  }
+
+  const totals = {};
+  dayMeals.forEach(meal => {
+    (meal.ingredients || []).forEach(ing => {
+      const ingredient = allIngredients.find(i => i.name === ing.name);
+      const cat = ingredient ? ingredient.category : '其他';
+      totals[cat] = (totals[cat] || 0) + (ing.weight || 0);
+    });
+  });
+
+  const feedingMonth = getFeedingMonth(selectedDate);
+  const targets = getNutritionTargets(selectedDate);
+
+  const categories = [
+    { key: '谷类', emoji: '🥯' },
+    { key: '蔬菜', emoji: '🥬' },
+    { key: '水果', emoji: '🍎' },
+    { key: '肉类', emoji: '🥩' },
+    { key: '水产', emoji: '🐟' },
+    { key: '蛋类', emoji: '🥚' },
+    { key: '油脂', emoji: '🧈' },
+    { key: '其他', emoji: '🧀' },
+  ];
+
+  let html = `<div class="daily-stats-title">今日营养摄入 <span style="font-size:11px;color:var(--primary);font-weight:400;">（第${feedingMonth}个月目标）</span></div>`;
+  html += '<div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:10px;">';
+
+  categories.forEach(cat => {
+    const val = totals[cat.key] || 0;
+    const target = targets[cat.key] || {};
+    const minT = target.min !== undefined ? target.min : null;
+    const maxT = target.max !== undefined ? target.max : null;
+    const hasTarget = target.min !== undefined || target.max !== undefined;
+    const hasMax = target.max !== undefined;
+    const isCustom = target.customLabel === true;
+
+    let targetLabel = getTargetLabel(target);
+
+    let statusColor = 'var(--gray-400)';
+    let statusText = '未摄入';
+    if (val > 0) {
+      if (hasTarget && !isCustom) {
+        if (minT !== null && val < minT) { statusColor = 'var(--warning)'; statusText = '不足'; }
+        else if (hasMax && val > maxT) { statusColor = 'var(--danger)'; statusText = '过量'; }
+        else { statusColor = 'var(--success)'; statusText = '✓ 达标'; }
+      } else if (hasTarget && isCustom) {
+        statusColor = 'var(--success)'; statusText = '✓ 已摄入';
+      } else {
+        statusColor = 'var(--info)'; statusText = '已摄入';
+      }
+    }
+    const unit = cat.key === '油脂' ? '滴' : 'g';
+    const divisor = hasTarget && !isCustom ? (hasMax ? maxT : (minT || 10)) : Math.max(val, 5);
+    const maxPercent = Math.min(100, Math.round(val / divisor * 100));
+
+    html += `<div class="bar-row">
+      <div class="bar-label">${cat.emoji} ${cat.key}<span class="cat-target">${targetLabel}</span></div>
+      <div class="bar-container">
+        <div class="bar-track">
+          <div class="bar-fill" style="width:${maxPercent}%;background:${statusColor};"></div>
+        </div>
+      </div>
+      <div class="bar-value">
+        <span class="val-num" style="color:${statusColor}">${val}${unit}</span>
+        <span class="bar-status-text" style="color:${statusColor}">${statusText}</span>
+      </div>
+    </div>`;
+  });
+
+  html += '</div>';
+  statsDiv.innerHTML = html;
+  statsDiv.style.display = 'block';
+}
+
+// ===== Utilities =====
+
+// Check if an ingredient is first-time on or before dateStr
+// Returns true only if dateStr is the earliest date this ingredient appears
+function isFirstTimeIngredient(ingName, dateStr) {
+  const uniqueDates = [...new Set(
+    allMeals
+      .filter(m => (m.ingredients || []).some(i => i.name === ingName))
+      .map(m => m.date)
+  )].sort();
+  if (uniqueDates.length === 0) return false;
+  return uniqueDates[0] === dateStr;
+}
+
+// ===== Ingredient Management =====
+function setupFilters() {
+  // Populate category filter dropdown
+  const catSelect = document.getElementById('categoryFilterSelect');
+  Object.keys(INGREDIENT_CATEGORIES).forEach(cat => {
+    const catInfo = INGREDIENT_CATEGORIES[cat];
+    const opt = document.createElement('option');
+    opt.value = cat;
+    opt.textContent = `${catInfo.emoji} ${cat}`;
+    catSelect.appendChild(opt);
+  });
+}
+
+function onStatusFilterChange(value) {
+  ingredientStatusFilter = value;
+  renderIngredients();
+}
+
+function onCategoryFilterChange(value) {
+  ingredientCategoryFilter = value;
+  renderIngredients();
+}
+
+function renderIngredients() {
+  let filtered = [...allIngredients];
+
+  if (ingredientStatusFilter !== 'all') {
+    filtered = filtered.filter(i => i.status === ingredientStatusFilter);
+  }
+  if (ingredientCategoryFilter !== 'all') {
+    filtered = filtered.filter(i => i.category === ingredientCategoryFilter);
+  }
+
+  // Sort: allergy first, then pending, then safe
+  filtered.sort((a, b) => {
+    const order = { allergy: 0, pending: 1, safe: 2 };
+    return (order[a.status] || 3) - (order[b.status] || 3);
+  });
+
+  const allergyCount = allIngredients.filter(i => i.status === 'allergy').length;
+  const allergyBanner = document.getElementById('allergyBanner');
+  const allergyBadge = document.getElementById('allergyCount');
+  if (allergyCount > 0) {
+    allergyBanner.style.display = 'flex';
+    const retrySoon = allIngredients.filter(i => {
+      return i.status === 'allergy' && i.retryDate && i.retryDate <= getDatePlusDays(todayStr, 7);
+    });
+    if (retrySoon.length > 0) {
+      document.getElementById('allergyBannerText').textContent =
+        `有 ${allergyCount} 种食材标记为过敏，其中 ${retrySoon.length} 种即将可以重新尝试（过敏满3个月）`;
+    } else {
+      document.getElementById('allergyBannerText').textContent =
+        `${allergyCount} 种食材标记为过敏，请在过敏满3个月后重新尝试`;
+    }
+    allergyBadge.style.display = 'inline';
+    allergyBadge.textContent = allergyCount;
+  } else {
+    allergyBanner.style.display = 'none';
+    allergyBadge.style.display = 'none';
+  }
+
+  const grid = document.getElementById('ingredientGrid');
+  grid.innerHTML = filtered.map(ing => {
+    const catInfo = INGREDIENT_CATEGORIES[ing.category] || { emoji: '📦', color: '#ccc' };
+    const isAllergy = ing.status === 'allergy';
+    const isLightCat = ing.category === '蛋类' || ing.category === '油脂';
+    const cardBg = isAllergy ? '#FDE8EA' : (catInfo.light || '#F5F3E8');
+    const statusLabels = { pending: '待添加', safe: '已排敏', allergy: '过敏' };
+    const statusClass = ing.status;
+
+    let dateInfo = '';
+    if (ing.status === 'allergy' && ing.retryDate) {
+      dateInfo = `可重试: ${ing.retryDate}`;
+      if (ing.retryDate <= todayStr) {
+        dateInfo += ' ⚡现在可以重新尝试!';
+      }
+    } else if (ing.status === 'safe' && ing.allergyDate) {
+      dateInfo = `首次尝试: ${ing.allergyDate}`;
+    }
+
+    let prefHtml = '';
+    const prefs = ['like'];
+    const prefEmojis = { like: '♡' };
+    const prefLabels = { like: '喜欢' };
+    prefs.forEach(p => {
+      const active = ing.preference === p;
+      prefHtml += `<button class="pref-btn ${active ? 'active' : ''}"
+        onclick="event.stopPropagation(); toggleIngredientLike(${ing.id})"
+        title="${prefLabels[p]}">${active ? '❤️' : '♡'}</button>`;
+    });
+
+    return `<div class="ingredient-card ${isAllergy ? 'allergy' : ''}" onclick="showIngredientDetail(${ing.id})" style="background:${cardBg};">
+      <div class="ingredient-emoji">${catInfo.emoji}</div>
+      <div class="ingredient-info">
+        <div class="ingredient-name" style="color:${isAllergy ? 'var(--danger)' : (isLightCat ? '#555' : '#333')};">${escapeHtml(ing.name)}</div>
+        <div class="ingredient-category">${ing.category}</div>
+      </div>
+      <span class="ingredient-status-badge ${statusClass}">${statusLabels[ing.status]}</span>
+      <div class="ingredient-pref">${prefHtml}</div>
+      ${dateInfo ? `<div class="ingredient-date">${dateInfo}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+async function toggleIngredientLike(id) {
+  const ing = await dbGet('ingredients', id);
+  ing.preference = ing.preference === 'like' ? 'neutral' : 'like';
+  await dbPut('ingredients', ing);
+  await loadAllData();
+  renderIngredients();
+}
+
+async function setIngredientPreference(id, pref) {
+  const ing = await dbGet('ingredients', id);
+  ing.preference = pref;
+  await dbPut('ingredients', ing);
+  await loadAllData();
+  renderIngredients();
+}
+
+async function showIngredientDetail(id) {
+  const ing = await dbGet('ingredients', id);
+  if (!ing) return;
+
+  const statusLabels = { pending: '待添加', safe: '已排敏', allergy: '过敏' };
+  const statusOptions = [
+    { value: 'pending', label: '待添加', color: 'var(--warning)' },
+    { value: 'safe', label: '已排敏', color: 'var(--success)' },
+    { value: 'allergy', label: '过敏', color: 'var(--danger)' },
+  ];
+
+  const catOptions = Object.keys(INGREDIENT_CATEGORIES).map(c =>
+    `<option value="${c}" ${c === ing.category ? 'selected' : ''}>${INGREDIENT_CATEGORIES[c].emoji} ${c}</option>`
+  ).join('');
+
+  const modal = document.getElementById('modalContainer');
+  modal.innerHTML = `
+    <div class="modal-overlay" onclick="if(event.target===this) closeModal()">
+      <div class="modal">
+        <h3>编辑食材</h3>
+        <div class="form-group">
+          <label class="form-label">食材名称</label>
+          <input class="form-input" id="editIngName" value="${escapeHtml(ing.name)}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">分类</label>
+          <select class="form-select" id="editIngCategory">${catOptions}</select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">排敏状态</label>
+          <select class="form-select" id="editIngStatus">
+            ${statusOptions.map(o => `<option value="${o.value}" ${ing.status === o.value ? 'selected' : ''}>${o.label}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">备注</label>
+          <input class="form-input" id="editIngNotes" placeholder="可选" value="${ing.notes || ''}">
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-danger btn-sm" onclick="deleteIngredient(${id})">删除食材</button>
+          <button class="btn btn-outline btn-sm" onclick="closeModal()">取消</button>
+          <button class="btn btn-primary btn-sm" onclick="saveIngredient(${id})">保存</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+async function saveIngredient(id) {
+  const ing = await dbGet('ingredients', id);
+  const oldName = ing.name;
+  const oldStatus = ing.status;
+  const newName = document.getElementById('editIngName').value.trim();
+  const newStatus = document.getElementById('editIngStatus').value;
+
+  if (!newName) { alert('食材名称不能为空'); return; }
+
+  ing.name = newName;
+  ing.category = document.getElementById('editIngCategory').value;
+  ing.status = newStatus;
+  ing.notes = document.getElementById('editIngNotes').value || '';
+
+  // If status changed to safe, record the first trial date
+  if (newStatus === 'safe' && oldStatus !== 'safe') {
+    ing.allergyDate = todayStr;
+  }
+
+  // If status changed to allergy, set retry date
+  if (newStatus === 'allergy' && oldStatus !== 'allergy') {
+    ing.allergyDate = todayStr;
+    ing.retryDate = getDatePlusDays(todayStr, 90);
+  }
+
+  // If status changed from allergy, clear allergy data
+  if (newStatus !== 'allergy' && oldStatus === 'allergy') {
+    ing.allergyDate = null;
+    ing.retryDate = null;
+  }
+
+  await dbPut('ingredients', ing);
+
+  // Cascade rename: if ingredient name changed, update all meal records
+  if (oldName !== newName) {
+    const allMealsRaw = await dbGetAll('meals');
+    let renamedCount = 0;
+    for (const meal of allMealsRaw) {
+      let modified = false;
+      const ings = meal.ingredients || [];
+      for (const mi of ings) {
+        if (mi.name === oldName) {
+          mi.name = newName;
+          modified = true;
+        }
+      }
+      if (modified) {
+        await dbPut('meals', meal);
+        renamedCount++;
+      }
+    }
+    // Also update recipes that reference the old name
+    const allRecipesRaw = await dbGetAll('recipes');
+    for (const r of allRecipesRaw) {
+      let modified = false;
+      for (const ri of (r.ingredients || [])) {
+        if (ri.name === oldName) {
+          ri.name = newName;
+          modified = true;
+        }
+      }
+      if (modified) {
+        await dbPut('recipes', r);
+      }
+    }
+    // Dedup: if another ingredient entry already exists with the new name, remove it
+    const allIngsRaw = await dbGetAll('ingredients');
+    const dup = allIngsRaw.find(i => i.id !== id && i.name === newName);
+    if (dup) {
+      await dbDelete('ingredients', dup.id);
+      console.log(`🧹 去重: 删除重复食材条目 "${newName}" (id=${dup.id})`);
+    }
+    if (renamedCount > 0) {
+      console.log(`🔄 食材改名 "${oldName}" → "${newName}"，已同步 ${renamedCount} 条膳食记录`);
+    }
+  }
+
+  // Repair: ensure all ingredients referenced in meals exist in ingredient DB
+  await repairMissingIngredients();
+
+  await loadAllData();
+  closeModal();
+  renderIngredients();
+  renderCalendar();
+}
+
+// Repair: create ingredient DB entries for any ingredient names found in meals but missing from ingredients store
+async function repairMissingIngredients() {
+  const allMealsRaw = await dbGetAll('meals');
+  const allIngsRaw = await dbGetAll('ingredients');
+  const existingNames = new Set(allIngsRaw.map(i => i.name));
+
+  const mealIngNames = new Set();
+  for (const meal of allMealsRaw) {
+    for (const mi of (meal.ingredients || [])) {
+      if (mi.name && !existingNames.has(mi.name)) {
+        mealIngNames.add(mi.name);
+      }
+    }
+  }
+
+  for (const name of mealIngNames) {
+    await dbPut('ingredients', {
+      name,
+      category: '其他',
+      status: 'pending',
+      allergyDate: null,
+      retryDate: null,
+      preference: 'neutral',
+      notes: '',
+      createdAt: todayStr
+    });
+    console.log(`🔧 自动补全缺失食材: "${name}"`);
+  }
+}
+
+async function deleteIngredient(id) {
+  const ing = allIngredients.find(i => i.id === id);
+  if (!ing) return;
+  const modal = document.getElementById('modalContainer');
+  modal.innerHTML = `
+    <div class="modal-overlay" onclick="if(event.target===this) closeModal()">
+      <div class="modal" style="max-width:380px;text-align:center;">
+        <h3>删除食材</h3>
+        <p style="font-size:14px;margin:12px 0;">确定删除食材「<strong>${escapeHtml(ing.name)}</strong>」吗？</p>
+        <p style="color:var(--gray-500);font-size:12px;">此操作不可撤销。</p>
+        <div class="form-actions" style="justify-content:center;margin-top:16px;">
+          <button class="btn btn-outline btn-sm" onclick="showEditIngredient(${id})">取消</button>
+          <button class="btn btn-danger btn-sm" onclick="doDeleteIngredient(${id})">确认删除</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+async function doDeleteIngredient(id) {
+  await dbDelete('ingredients', id);
+  await loadAllData();
+  renderIngredients();
+  closeModal();
+}
+
+function showAddIngredient() {
+  const catOptions = Object.keys(INGREDIENT_CATEGORIES).map(c =>
+    `<option value="${c}">${INGREDIENT_CATEGORIES[c].emoji} ${c}</option>`
+  ).join('');
+
+  const modal = document.getElementById('modalContainer');
+  modal.innerHTML = `
+    <div class="modal-overlay" onclick="if(event.target===this) closeModal()">
+      <div class="modal">
+        <h3>添加新食材</h3>
+        <div class="form-group">
+          <label class="form-label">食材名称 *</label>
+          <input class="form-input" id="newIngName" placeholder="例如：紫薯、红心火龙果">
+        </div>
+        <div class="form-group">
+          <label class="form-label">分类 *</label>
+          <select class="form-select" id="newIngCategory">${catOptions}</select>
+        </div>
+        <div class="alert alert-info">
+          💡 新添加的食材默认为"待添加"状态。在食材管理页中手动标记为"已排敏"表示宝宝已经吃过且没有过敏反应。
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-outline btn-sm" onclick="closeModal()">取消</button>
+          <button class="btn btn-primary btn-sm" onclick="addIngredient()">添加</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+async function addIngredient() {
+  const name = document.getElementById('newIngName').value.trim();
+  const category = document.getElementById('newIngCategory').value;
+  if (!name) { alert('请输入食材名称'); return; }
+
+  await dbPut('ingredients', {
+    name, category,
+    status: 'pending',
+    allergyDate: null,
+    retryDate: null,
+    preference: 'neutral',
+    notes: '',
+    createdAt: todayStr
+  });
+
+  await loadAllData();
+  closeModal();
+  renderIngredients();
+}
+
+// ===== Meal Shared Helpers =====
+// Global state for meal form
+window._selectedMealIngredients = {};
+
+function toggleIngredientSelect(el) {
+  const id = parseInt(el.dataset.id);
+  const name = el.dataset.name;
+  if (window._selectedMealIngredients[id]) {
+    delete window._selectedMealIngredients[id];
+    el.classList.remove('selected');
+  } else {
+    window._selectedMealIngredients[id] = { id, name, weight: 10, unit: 'g' };
+    el.classList.add('selected');
+  }
+  renderSelectedIngredients();
+}
+
+function renderSelectedIngredients() {
+  const container = document.getElementById('selectedIngredients');
+  if (!container) return;
+  const items = Object.values(window._selectedMealIngredients);
+  if (items.length === 0) {
+    container.innerHTML = '<span style="color:var(--gray-400);font-size:13px;">点击上方食材进行选择</span>';
+    return;
+  }
+  container.innerHTML = items.map(item => `
+    <span class="selected-ingredient-tag">
+      ${escapeHtml(item.name)}
+      <input type="number" value="${item.weight}" min="1" max="200" onchange="updateIngredientWeight(${item.id}, this.value)" style="width:45px"> g
+      <span class="remove-tag" onclick="removeSelectedIngredient(${item.id})">✕</span>
+    </span>
+  `).join('');
+}
+
+function updateIngredientWeight(id, weight) {
+  if (window._selectedMealIngredients[id]) {
+    window._selectedMealIngredients[id].weight = parseFloat(weight) || 0;
+  }
+}
+
+function removeSelectedIngredient(id) {
+  delete window._selectedMealIngredients[id];
+  // Also deselect in list
+  const el = document.querySelector(`.ingredient-select-item[data-id="${id}"]`);
+  if (el) el.classList.remove('selected');
+  renderSelectedIngredients();
+}
+
+// ===== Recipe Management =====
+function renderRecipes() {
+  const container = document.getElementById('recipeList');
+  const searchTerm = (document.getElementById('recipeSearch')?.value || '').trim().toLowerCase();
+
+  // Build category filter dropdown options
+  const categories = [...new Set(allRecipes.map(r => r.category || '未分类'))].sort();
+  const catSelect = document.getElementById('recipeCatFilterSelect');
+  if (catSelect) {
+    const currentVal = catSelect.value;
+    catSelect.innerHTML = '<option value="all">全部分类</option>' +
+      categories.map(c => `<option value="${c.replace(/"/g, '&quot;')}" ${currentVal === c ? 'selected' : ''}>${c}</option>`).join('');
+  }
+
+  // Filter recipes
+  let filtered = allRecipes;
+  if (searchTerm) {
+    filtered = filtered.filter(r => {
+      const nameMatch = r.name.toLowerCase().includes(searchTerm);
+      const ingMatch = (r.ingredients || []).some(ing => ing.name.toLowerCase().includes(searchTerm));
+      return nameMatch || ingMatch;
+    });
+  }
+  const selCat = catSelect?.value;
+  if (selCat && selCat !== 'all') {
+    filtered = filtered.filter(r => (r.category || '未分类') === selCat);
+  }
+
+  if (filtered.length === 0) {
+    container.innerHTML = `<div style="text-align:center;color:var(--gray-400);padding:24px;">暂无匹配的食谱</div>`;
+    return;
+  }
+
+  container.innerHTML = filtered.map(r => `
+    <div class="recipe-card">
+      <div class="recipe-card-header">
+        <div class="recipe-name">${escapeHtml(r.name)}</div>
+        <div class="recipe-actions">
+          <button class="btn-icon" onclick="showEditRecipe(${r.id})" title="编辑">✏️</button>
+          <button class="btn-icon danger" onclick="deleteRecipe(${r.id})" title="删除">🗑️</button>
+        </div>
+      </div>
+      <div class="recipe-tags">
+        ${(r.ingredients || []).map(ing => `<span class="meal-ingredient-tag">${escapeHtml(ing.name)} ${ing.weight}${ing.unit || 'g'}</span>`).join('')}
+      </div>
+      <div style="font-size:12px;color:var(--gray-500);margin-bottom:4px;">分类: ${r.category || '未分类'}</div>
+      <button class="recipe-record-btn" onclick="recordRecipeMeal(${r.id})">📝 一键记录今天的辅食</button>
+      <button class="btn btn-outline btn-sm" style="width:100%;margin-top:6px;" onclick="recordRecipeMeal(${r.id}, true)">📅 选择日期记录</button>
+    </div>
+  `).join('');
+}
+
+async function recordRecipeMeal(recipeId, chooseDate = false) {
+  const recipe = await dbGet('recipes', recipeId);
+  if (!recipe) return;
+
+  let date = todayStr;
+  if (chooseDate) {
+    // Show date picker modal
+    const modal = document.getElementById('modalContainer');
+    modal.innerHTML = `
+      <div class="modal-overlay" onclick="if(event.target===this) closeModal()">
+        <div class="modal" style="max-width:360px;">
+          <h3>选择记录日期</h3>
+          <div class="form-group">
+            <label class="form-label">选择要记录的日期</label>
+            <input type="date" class="form-input" id="recipeDatePicker" value="${todayStr}">
+          </div>
+          <div style="font-size:12px;color:var(--gray-500);margin-bottom:8px;">将把「${escapeHtml(recipe.name)}」记录到该日期</div>
+          <div class="form-actions">
+            <button class="btn btn-outline btn-sm" onclick="closeModal()">取消</button>
+            <button class="btn btn-primary btn-sm" onclick="confirmRecipeDate(${recipeId})">✅ 确认记录</button>
+          </div>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  const dayMeals = allMeals.filter(m => m.date === date);
+  if (dayMeals.length >= 4) {
+    alert('⚠️ 该日期已有4顿辅食记录，无法再添加（每日最多4顿）');
+    return;
+  }
+  const nextMealNumber = dayMeals.length + 1;
+
+  const ingredients = (recipe.ingredients || []).map(ing => ({
+    name: ing.name,
+    weight: ing.weight,
+    unit: ing.unit || 'g'
+  }));
+
+  await dbPut('meals', {
+    date,
+    mealNumber: nextMealNumber,
+    mealName: recipe.name,
+    ingredients,
+    notes: `来自食谱: ${recipe.name}`,
+    recipeId: recipe.id,
+    createdAt: new Date().toISOString()
+  });
+
+  await loadAllData();
+
+  // If recording for today and we're on calendar view, refresh
+  if (date === selectedDate) {
+    openDayModal(selectedDate);
+    renderDailyStats();
+  }
+  renderCalendar();
+
+  // Flash feedback
+  alert(`✅ 已将「${recipe.name}」记录为 ${date} 第${nextMealNumber}顿辅食！`);
+}
+
+async function confirmRecipeDate(recipeId) {
+  const dateInput = document.getElementById('recipeDatePicker');
+  if (!dateInput || !dateInput.value) return;
+  const date = dateInput.value;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return;
+  await closeModal();
+
+  const recipe = await dbGet('recipes', recipeId);
+  if (!recipe) return;
+
+  const dayMeals = allMeals.filter(m => m.date === date);
+  if (dayMeals.length >= 4) {
+    alert('⚠️ 该日期已有4顿辅食记录，无法再添加（每日最多4顿）');
+    return;
+  }
+  const nextMealNumber = dayMeals.length + 1;
+
+  const ingredients = (recipe.ingredients || []).map(ing => ({
+    name: ing.name,
+    weight: ing.weight,
+    unit: ing.unit || 'g'
+  }));
+
+  await dbPut('meals', {
+    date,
+    mealNumber: nextMealNumber,
+    mealName: recipe.name,
+    ingredients,
+    notes: `来自食谱: ${recipe.name}`,
+    recipeId: recipe.id,
+    createdAt: new Date().toISOString()
+  });
+
+  await loadAllData();
+  if (date === selectedDate) {
+    openDayModal(selectedDate);
+    renderDailyStats();
+  }
+  renderCalendar();
+  alert(`✅ 已将「${recipe.name}」记录为 ${date} 第${nextMealNumber}顿辅食！`);
+}
+
+function showAddRecipe() {
+  window._selectedMealIngredients = {};
+  const safeIngredients = allIngredients.filter(i => i.status === 'safe' || i.status === 'pending');
+  const ingredientOptions = safeIngredients.map(ing => {
+    const catInfo = INGREDIENT_CATEGORIES[ing.category] || { emoji: '📦' };
+    const statusBadge = ing.status === 'pending'
+      ? '<span style="color:var(--warning);font-size:11px;">⚠新</span>'
+      : '<span style="color:var(--success);font-size:11px;">✓</span>';
+    return `<div class="ingredient-select-item" data-id="${ing.id}" data-name="${escapeHtml(ing.name)}" data-cat="${ing.category}" onclick="toggleIngredientSelect(this)">
+      <span>${catInfo.emoji} ${escapeHtml(ing.name)} <span style="font-size:11px;color:var(--gray-400)">${ing.category}</span></span>
+      ${statusBadge}
+    </div>`;
+  }).join('');
+
+  const modal = document.getElementById('modalContainer');
+  modal.innerHTML = `
+    <div class="modal-overlay" onclick="if(event.target===this) closeModal()">
+      <div class="modal" style="max-width:600px">
+        <h3>新建食谱</h3>
+        <div class="form-group">
+          <label class="form-label">食谱名称 *</label>
+          <input class="form-input" id="recipeName" placeholder="例如：南瓜鸡肉泥">
+        </div>
+        <div class="form-group">
+          <label class="form-label">分类</label>
+          <select class="form-select" id="recipeCategory" style="width:100%;" onchange="onRecipeCategoryChange()">
+            <option value="7月龄">7月龄</option>
+            <option value="8月龄">8月龄</option>
+            <option value="9月龄">9月龄</option>
+            <option value="10月龄">10月龄</option>
+            <option value="11月龄">11月龄</option>
+            <option value="1岁">1岁</option>
+            <option value="2岁">2岁</option>
+            <option value="3岁">3岁</option>
+            <option value="__custom__">自定义</option>
+          </select>
+        </div>
+        <div id="customCatInput" style="display:none;margin-bottom:14px;">
+          <label class="form-label">自定义分类名称</label>
+          <input class="form-input" id="customCategory" placeholder="请输入分类名称（如：零食、汤羹）">
+        </div>
+        <div class="form-group">
+          <label class="form-label">选择食材</label>
+          <div class="ingredient-select-list">${ingredientOptions}</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">已选食材及重量</label>
+          <div class="selected-ingredients" id="selectedIngredients"></div>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-outline btn-sm" onclick="closeModal()">取消</button>
+          <button class="btn btn-primary btn-sm" onclick="saveRecipe()">💾 保存食谱</button>
+        </div>
+      </div>
+    </div>
+  `;
+  renderSelectedIngredients();
+}
+
+async function saveRecipe() {
+  const name = document.getElementById('recipeName').value.trim();
+  if (!name) { alert('请输入食谱名称'); return; }
+
+  const catSelect = document.getElementById('recipeCategory');
+  let category = catSelect?.value || '7月龄';
+  if (category === '__custom__') {
+    category = document.getElementById('customCategory')?.value?.trim() || '自定义';
+  }
+  const ingredients = Object.values(window._selectedMealIngredients).map(i => ({
+    name: i.name,
+    weight: i.weight,
+    unit: i.unit
+  }));
+
+  if (ingredients.length === 0) { alert('请至少选择一种食材'); return; }
+
+  await dbPut('recipes', {
+    name,
+    ingredients,
+    category,
+    isPreset: false
+  });
+
+  await loadAllData();
+  closeModal();
+  renderRecipes();
+}
+
+async function showEditRecipe(id) {
+  const recipe = await dbGet('recipes', id);
+  if (!recipe) return;
+
+  window._selectedMealIngredients = {};
+  (recipe.ingredients || []).forEach(ing => {
+    const ingredient = allIngredients.find(i => i.name === ing.name);
+    window._selectedMealIngredients[ingredient ? ingredient.id : Math.random()] = {
+      id: ingredient ? ingredient.id : Math.random(),
+      name: ing.name,
+      weight: ing.weight,
+      unit: ing.unit || 'g'
+    };
+  });
+
+  const safeIngredients = allIngredients.filter(i => i.status === 'safe' || i.status === 'pending');
+  const ingredientOptions = safeIngredients.map(ing => {
+    const catInfo = INGREDIENT_CATEGORIES[ing.category] || { emoji: '📦' };
+    const selected = window._selectedMealIngredients[ing.id] ? ' selected' : '';
+    const statusBadge = ing.status === 'pending'
+      ? '<span style="color:var(--warning);font-size:11px;">⚠新</span>'
+      : '<span style="color:var(--success);font-size:11px;">✓</span>';
+    return `<div class="ingredient-select-item${selected}" data-id="${ing.id}" data-name="${escapeHtml(ing.name)}" data-cat="${ing.category}" onclick="toggleIngredientSelect(this)">
+      <span>${catInfo.emoji} ${escapeHtml(ing.name)} <span style="font-size:11px;color:var(--gray-400)">${ing.category}</span></span>
+      ${statusBadge}
+    </div>`;
+  }).join('');
+
+  const predefinedCats = ['7月龄', '8月龄', '9月龄', '10月龄', '11月龄', '1岁', '2岁', '3岁'];
+  const existingCat = recipe.category || '';
+  const isCustom = !predefinedCats.includes(existingCat);
+  const catValue = isCustom ? '__custom__' : existingCat;
+  const customName = isCustom ? existingCat : '';
+
+  const modal = document.getElementById('modalContainer');
+  modal.innerHTML = `
+    <div class="modal-overlay" onclick="if(event.target===this) closeModal()">
+      <div class="modal" style="max-width:600px">
+        <h3>编辑食谱</h3>
+        <div class="form-group">
+          <label class="form-label">食谱名称</label>
+          <input class="form-input" id="recipeName" value="${escapeHtml(recipe.name)}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">分类</label>
+          <select class="form-select" id="recipeCategory" style="width:100%;" onchange="onRecipeCategoryChange()">
+            <option value="7月龄" ${catValue === '7月龄' ? 'selected' : ''}>7月龄</option>
+            <option value="8月龄" ${catValue === '8月龄' ? 'selected' : ''}>8月龄</option>
+            <option value="9月龄" ${catValue === '9月龄' ? 'selected' : ''}>9月龄</option>
+            <option value="10月龄" ${catValue === '10月龄' ? 'selected' : ''}>10月龄</option>
+            <option value="11月龄" ${catValue === '11月龄' ? 'selected' : ''}>11月龄</option>
+            <option value="1岁" ${catValue === '1岁' ? 'selected' : ''}>1岁</option>
+            <option value="2岁" ${catValue === '2岁' ? 'selected' : ''}>2岁</option>
+            <option value="3岁" ${catValue === '3岁' ? 'selected' : ''}>3岁</option>
+            <option value="__custom__" ${isCustom ? 'selected' : ''}>自定义</option>
+          </select>
+        </div>
+        <div id="customCatInput" style="display:${isCustom ? 'block' : 'none'};margin-bottom:14px;">
+          <label class="form-label">自定义分类名称</label>
+          <input class="form-input" id="customCategory" placeholder="请输入分类名称（如：零食、汤羹）" value="${escapeHtml(customName)}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">选择食材</label>
+          <div class="ingredient-select-list">${ingredientOptions}</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">已选食材及重量</label>
+          <div class="selected-ingredients" id="selectedIngredients"></div>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-outline btn-sm" onclick="closeModal()">取消</button>
+          <button class="btn btn-primary btn-sm" onclick="updateRecipe(${id})">💾 保存</button>
+        </div>
+      </div>
+    </div>
+  `;
+  renderSelectedIngredients();
+}
+
+async function updateRecipe(id) {
+  const recipe = await dbGet('recipes', id);
+  recipe.name = document.getElementById('recipeName').value.trim();
+  const catValue = document.getElementById('recipeCategory')?.value || '7月龄';
+  recipe.category = catValue === '__custom__' ? (document.getElementById('customCategory')?.value?.trim() || '自定义') : catValue;
+  recipe.ingredients = Object.values(window._selectedMealIngredients).map(i => ({
+    name: i.name,
+    weight: i.weight,
+    unit: i.unit
+  }));
+  if (!recipe.name || recipe.ingredients.length === 0) {
+    alert('请填写食谱名称并选择食材');
+    return;
+  }
+  await dbPut('recipes', recipe);
+  await loadAllData();
+  closeModal();
+  renderRecipes();
+}
+
+async function deleteRecipe(id) {
+  const recipe = allRecipes.find(r => r.id === id);
+  if (!recipe) return;
+  const modal = document.getElementById('modalContainer');
+  modal.innerHTML = `
+    <div class="modal-overlay" onclick="if(event.target===this) closeModal()">
+      <div class="modal" style="max-width:380px;text-align:center;">
+        <h3>删除食谱</h3>
+        <div style="margin:16px 0;font-size:14px;">
+          <p>确定删除食谱「<strong>${escapeHtml(recipe.name)}</strong>」吗？</p>
+          <p style="color:var(--gray-500);font-size:12px;">删除后无法恢复。</p>
+        </div>
+        <div class="form-actions" style="justify-content:center;">
+          <button class="btn btn-outline btn-sm" onclick="closeModal()">取消</button>
+          <button class="btn btn-danger btn-sm" onclick="doDeleteRecipe(${id})">确认删除</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+async function doDeleteRecipe(id) {
+  try {
+    await dbDelete('recipes', id);
+    await loadAllData();
+    closeModal();
+    renderRecipes();
+  } catch (err) {
+    console.error('删除食谱失败:', err);
+    alert('删除失败: ' + err.message);
+  }
+}
+
+// ===== Stats Overview =====
+function renderStats() {
+  const container = document.getElementById('statsOverview');
+
+  // Summary counts
+  const totalSafe = allIngredients.filter(i => i.status === 'safe').length;
+  const totalPending = allIngredients.filter(i => i.status === 'pending').length;
+  const totalAllergy = allIngredients.filter(i => i.status === 'allergy').length;
+  const totalMeals = allMeals.length;
+
+  // Category breakdown
+  const catBreakdown = {};
+  allIngredients.forEach(i => {
+    if (!catBreakdown[i.category]) catBreakdown[i.category] = { safe: 0, pending: 0, allergy: 0 };
+    catBreakdown[i.category][i.status]++;
+  });
+
+  // Recent meals (last 7 days)
+  const sevenDaysAgo = getDatePlusDays(todayStr, -7);
+  const recentMeals = allMeals.filter(m => m.date >= sevenDaysAgo);
+  const recentDays = new Set(recentMeals.map(m => m.date)).size;
+
+  // Average intake
+  let totalGrains = 0, totalVeg = 0, totalFruit = 0, totalMeat = 0, totalEgg = 0, totalOil = 0;
+  let mealCount = 0;
+  recentMeals.forEach(meal => {
+    mealCount++;
+    (meal.ingredients || []).forEach(ing => {
+      const ingredient = allIngredients.find(i => i.name === ing.name);
+      const cat = ingredient ? ingredient.category : '其他';
+      if (cat === '谷类') totalGrains += ing.weight || 0;
+      if (cat === '蔬菜') totalVeg += ing.weight || 0;
+      if (cat === '水果') totalFruit += ing.weight || 0;
+      if (cat === '肉类' || cat === '水产') totalMeat += ing.weight || 0;
+      if (cat === '蛋类') totalEgg += ing.weight || 0;
+      if (cat === '油脂') totalOil += ing.weight || 0;
+    });
+  });
+
+  const avgDays = recentDays || 1;
+
+  let html = `
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); gap:12px; margin-bottom:20px;">
+      <div style="background:white;border-radius:var(--radius);padding:20px;text-align:center;border:2px solid var(--gray-300);">
+        <div style="font-size:32px;">✅</div>
+        <div style="font-size:28px;font-weight:700;color:var(--success);">${totalSafe}</div>
+        <div style="font-size:13px;color:var(--gray-500);">已排敏食材</div>
+      </div>
+      <div style="background:white;border-radius:var(--radius);padding:20px;text-align:center;border:2px solid var(--gray-300);">
+        <div style="font-size:32px;">⏳</div>
+        <div style="font-size:28px;font-weight:700;color:var(--warning);">${totalPending}</div>
+        <div style="font-size:13px;color:var(--gray-500);">待添加食材</div>
+      </div>
+      <div style="background:white;border-radius:var(--radius);padding:20px;text-align:center;border:2px solid var(--gray-300);">
+        <div style="font-size:32px;">⚠️</div>
+        <div style="font-size:28px;font-weight:700;color:var(--danger);">${totalAllergy}</div>
+        <div style="font-size:13px;color:var(--gray-500);">过敏食材</div>
+      </div>
+      <div style="background:white;border-radius:var(--radius);padding:20px;text-align:center;border:2px solid var(--gray-300);">
+        <div style="font-size:32px;">🍽️</div>
+        <div style="font-size:28px;font-weight:700;color:var(--primary);">${totalMeals}</div>
+        <div style="font-size:13px;color:var(--gray-500);">辅食总顿数</div>
+      </div>
+    </div>
+
+    <div style="background:white;border-radius:var(--radius);padding:20px;border:2px solid var(--gray-300);margin-bottom:16px;">
+      <h3 style="font-size:15px;margin-bottom:12px;">最近7天（${sevenDaysAgo} ~ ${todayStr}）</h3>
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(120px, 1fr)); gap:10px;">
+        <div style="text-align:center;">
+          <div style="font-size:24px;font-weight:700;">${recentDays}</div>
+          <div style="font-size:12px;color:var(--gray-500);">有辅食的天数</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-size:24px;font-weight:700;">${recentMeals.length}</div>
+          <div style="font-size:12px;color:var(--gray-500);">总顿数</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-size:24px;font-weight:700;">${(totalGrains / avgDays).toFixed(1)}g</div>
+          <div style="font-size:12px;color:var(--gray-500);">日均谷类</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-size:24px;font-weight:700;">${(totalVeg / avgDays).toFixed(1)}g</div>
+          <div style="font-size:12px;color:var(--gray-500);">日均蔬菜</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-size:24px;font-weight:700;">${(totalMeat / avgDays).toFixed(1)}g</div>
+          <div style="font-size:12px;color:var(--gray-500);">日均肉禽</div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Ingredient appearance ranking (count across all meals)
+  const ingredientCounts = {};
+  allMeals.forEach(meal => {
+    const seen = new Set();
+    (meal.ingredients || []).forEach(ing => {
+      if (!seen.has(ing.name)) {
+        seen.add(ing.name);
+        if (!ingredientCounts[ing.name]) {
+          const ingredient = allIngredients.find(i => i.name === ing.name);
+          ingredientCounts[ing.name] = {
+            count: 0,
+            category: ingredient ? ingredient.category : '其他',
+            status: ingredient ? ingredient.status : 'pending'
+          };
+        }
+        ingredientCounts[ing.name].count++;
+      }
+    });
+  });
+
+  const rankSort = window._ingredientRankSort || 'desc';
+  const rankList = Object.entries(ingredientCounts).sort((a, b) => {
+    return rankSort === 'desc' ? b[1].count - a[1].count : a[1].count - b[1].count;
+  });
+
+  // Two-column layout: category stats + ingredient ranking
+  html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+    <!-- Left: Category breakdown -->
+    <div style="background:white;border-radius:var(--radius);padding:20px;border:2px solid var(--gray-300);">
+      <h3 style="font-size:15px;margin-bottom:12px;">食材分类统计</h3>
+      <table style="width:100%;border-collapse:collapse;font-size:13px;">
+        <tr style="border-bottom:2px solid var(--gray-200);">
+          <th style="text-align:left;padding:8px;">分类</th>
+          <th style="text-align:center;padding:8px;color:var(--success);">已排敏</th>
+          <th style="text-align:center;padding:8px;color:var(--warning);">待添加</th>
+          <th style="text-align:center;padding:8px;color:var(--danger);">过敏</th>
+          <th style="text-align:center;padding:8px;">总计</th>
+        </tr>`;
+
+  Object.entries(INGREDIENT_CATEGORIES).forEach(([cat, info]) => {
+    const data = catBreakdown[cat] || { safe: 0, pending: 0, allergy: 0 };
+    const total = data.safe + data.pending + data.allergy;
+    if (total === 0) return;
+    html += `<tr style="border-bottom:1px solid var(--gray-100);">
+      <td style="padding:8px;">${info.emoji} ${cat}</td>
+      <td style="text-align:center;padding:8px;">${data.safe || '-'}</td>
+      <td style="text-align:center;padding:8px;">${data.pending || '-'}</td>
+      <td style="text-align:center;padding:8px;">${data.allergy || '-'}</td>
+      <td style="text-align:center;padding:8px;font-weight:600;">${total}</td>
+    </tr>`;
+  });
+
+  html += `</table></div>
+
+    <!-- Right: Ingredient appearance ranking -->
+    <div style="background:white;border-radius:var(--radius);padding:20px;border:2px solid var(--gray-300);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <h3 style="font-size:15px;">食材添加排名</h3>
+        <button class="btn btn-sm" style="padding:4px 10px;font-size:12px;" onclick="toggleIngredientRankSort()">
+          ${rankSort === 'desc' ? '⬇️ 次数多到少' : '⬆️ 次数少到多'}
+        </button>
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-size:13px;">
+        <thead>
+        <tr style="border-bottom:2px solid var(--gray-200);">
+          <th style="text-align:left;padding:8px;">食材</th>
+          <th style="text-align:center;padding:8px;">次数</th>
+        </tr>
+        </thead>
+      </table>
+      <div style="max-height:290px;overflow-y:auto;">
+      <table style="width:100%;border-collapse:collapse;font-size:13px;">
+        <tbody>`;
+
+  if (rankList.length === 0) {
+    html += `<tr><td colspan="2" style="padding:16px;text-align:center;color:var(--gray-400);">暂无数据</td></tr>`;
+  } else {
+    rankList.forEach(([name, data]) => {
+      const catInfo = INGREDIENT_CATEGORIES[data.category] || { emoji: '📦' };
+      const statusColor = data.status === 'safe' ? 'var(--success)' : (data.status === 'allergy' ? 'var(--danger)' : 'var(--warning)');
+      html += `<tr style="border-bottom:1px solid var(--gray-100);">
+        <td style="padding:8px;">${catInfo.emoji} ${escapeHtml(name)}</td>
+        <td style="text-align:center;padding:8px;font-weight:600;color:${statusColor};">${data.count}</td>
+      </tr>`;
+    });
+  }
+
+  html += `</tbody></table></div></div></div>`;
+
+  container.innerHTML = html;
+}
+
+// ===== Utilities =====
+function onRecipeCatFilterChange(value) {
+  renderRecipes();
+}
+
+// Toggle ingredient ranking sort order
+function toggleIngredientRankSort() {
+  window._ingredientRankSort = (window._ingredientRankSort || 'desc') === 'desc' ? 'asc' : 'desc';
+  renderStats();
+}
+
+function onRecipeCategoryChange() {
+  const sel = document.getElementById('recipeCategory');
+  const customDiv = document.getElementById('customCatInput');
+  if (sel && customDiv) {
+    customDiv.style.display = sel.value === '__custom__' ? 'block' : 'none';
+  }
+}
+
+function closeModal() {
+  document.getElementById('modalContainer').innerHTML = '';
+  window._selectedMealIngredients = {};
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function getDatePlusDays(dateStr, days) {
+  const d = new Date(dateStr);
+  d.setDate(d.getDate() + days);
+  return formatDate(d);
+}
+
+// ===== Export Calendar as Image =====
+async function exportCalendarImage() {
+  const grid = document.getElementById('calendarGrid');
+  if (!grid || typeof html2canvas !== 'function') {
+    alert('导出功能加载中，请稍后再试');
+    return;
+  }
+
+  // Show loading hint
+  const btn = document.querySelector('.calendar-export-btn');
+  const origText = btn.textContent;
+  btn.textContent = '生成中...';
+  btn.disabled = true;
+
+  try {
+    // Clone grid to avoid messing with live DOM
+    const canvas = await html2canvas(grid, {
+      backgroundColor: '#FFFFFF',
+      scale: 2,
+      useCORS: true,
+      logging: false,
+    });
+
+    // Convert to image and download
+    const link = document.createElement('a');
+    const monthStr = document.getElementById('calendarMonth').textContent.replace(/\s/g, '');
+    link.download = `辣堡辅食日历_${monthStr}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  } catch (err) {
+    console.error('Export failed:', err);
+    alert('导出失败，请重试');
+  } finally {
+    btn.textContent = origText;
+    btn.disabled = false;
+  }
+}
+
+// ===== Toast =====
+function showToast(msg) {
+  let toast = document.getElementById('copyToast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'copyToast';
+    toast.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:var(--black);color:white;padding:10px 24px;border-radius:var(--radius-sm);font-size:14px;font-weight:700;z-index:9999;pointer-events:none;transition:opacity 0.3s,transform 0.3s;opacity:0;';
+    document.body.appendChild(toast);
+  }
+  toast.textContent = msg;
+  toast.style.opacity = '1';
+  toast.style.transform = 'translateX(-50%) translateY(0)';
+  clearTimeout(toast._timeout);
+  toast._timeout = setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateX(-50%) translateY(-10px)';
+  }, 1800);
+}
+
+// ===== Keyboard shortcuts + Copy/Paste =====
+document.addEventListener('keydown', (e) => {
+  // Don't intercept in inputs
+  const tag = document.activeElement ? document.activeElement.tagName : '';
+  const inInput = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || document.activeElement.isContentEditable;
+
+  // Ctrl+C: Copy selected date's meals
+  if ((e.ctrlKey || e.metaKey) && (e.key === 'c' || e.key === 'C' || e.code === 'KeyC') && !inInput) {
+    if (!selectedDate) return;
+    const dayMeals = allMeals.filter(m => m.date === selectedDate);
+    if (dayMeals.length === 0) {
+      showToast('当天无辅食记录');
+      e.preventDefault();
+      return;
+    }
+    const copyData = {
+      type: 'baby-food-meals',
+      date: selectedDate,
+      meals: dayMeals.sort((a,b) => a.mealNumber - b.mealNumber).map(m => ({
+        mealNumber: m.mealNumber,
+        mealName: m.mealName || '',
+        ingredients: m.ingredients || [],
+        notes: m.notes || '',
+      }))
+    };
+    const jsonStr = JSON.stringify(copyData);
+
+    // Try modern clipboard API first, fall back to execCommand
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(jsonStr).then(() => {
+          showToast(`已复制 ${dayMeals.length} 顿辅食 ✓`);
+        }).catch((err) => {
+          console.error('Clipboard write failed:', err);
+          fallbackCopy(jsonStr, dayMeals.length);
+        });
+      } else {
+        fallbackCopy(jsonStr, dayMeals.length);
+      }
+    } catch (err) {
+      console.error('Clipboard error:', err);
+      fallbackCopy(jsonStr, dayMeals.length);
+    }
+    e.preventDefault();
+    return;
+  }
+
+  if (e.key === 'Escape') closeModal();
+  if (e.key === 'ArrowLeft' && !document.querySelector('.modal-overlay')) prevMonth();
+  if (e.key === 'ArrowRight' && !document.querySelector('.modal-overlay')) nextMonth();
+});
+
+// Fallback copy using execCommand
+function fallbackCopy(text, count) {
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.left = '-9999px';
+    ta.style.top = '-9999px';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    const ok = document.execCommand('copy');
+    document.body.removeChild(ta);
+    if (ok) {
+      showToast(`已复制 ${count} 顿辅食 ✓`);
+    } else {
+      showToast('复制失败，请重试');
+    }
+  } catch (err) {
+    console.error('Fallback copy failed:', err);
+    showToast('复制失败，请重试');
+  }
+}
+
+// Ctrl+V (paste event has better clipboard access)
+document.addEventListener('paste', (e) => {
+  const tag = document.activeElement ? document.activeElement.tagName : '';
+  const inInput = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || document.activeElement.isContentEditable;
+  if (inInput) return;
+
+  if (!e.clipboardData) return;
+  const text = e.clipboardData.getData('text');
+  if (!text) return;
+
+  try {
+    const data = JSON.parse(text);
+    if (data.type !== 'baby-food-meals' || !Array.isArray(data.meals) || !data.meals.length) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+    pasteMealsToDate(data);
+  } catch (err) {
+    // Not our clipboard data, ignore
+  }
+});
+
+async function pasteMealsToDate(data) {
+  try {
+    // Use currently selected date
+    const targetDate = selectedDate;
+    if (!targetDate) {
+      showToast('请先在日历中选择一个目标日期');
+      return;
+    }
+
+    // Validate data
+    if (!data.meals || !data.meals.length) {
+      showToast('剪贴板中没有有效的辅食数据');
+      return;
+    }
+
+    // Clear existing meals for target date
+    const existing = allMeals.filter(m => m.date === targetDate);
+    for (const m of existing) {
+      await dbDelete('meals', m.id);
+    }
+
+    // Insert copied meals
+    let count = 0;
+    for (const m of data.meals) {
+      await dbPut('meals', {
+        date: targetDate,
+        mealNumber: m.mealNumber,
+        mealName: m.mealName || '',
+        ingredients: m.ingredients || [],
+        notes: m.notes || '',
+        createdAt: new Date().toISOString()
+      });
+      count++;
+    }
+
+    await loadAllData();
+    renderCalendar();
+    renderDailyStats();
+
+    // If day modal is open, refresh it
+    if (document.querySelector('.modal-overlay') && document.getElementById('dayRecipeSearch')) {
+      openDayModal(targetDate);
+    }
+
+    showToast(`已粘贴 ${count} 顿辅食 → ${targetDate} ✓`);
+  } catch (err) {
+    console.error('粘贴失败:', err);
+    showToast('粘贴失败，请重试');
+  }
+}
+
+// Click-outside handler for day recipe search
+document.addEventListener('click', function(e) {
+  // Day recipe search results
+  const drr = document.getElementById('dayRecipeResults');
+  const drs = document.getElementById('dayRecipeSearch');
+  if (drr && drr.style.display !== 'none' && drs && !drs.contains(e.target) && !drr.contains(e.target)) {
+    drr.style.display = 'none';
+  }
+});
+
+// ===== Start =====
+init();
+</script>
+<script>
+// Register Service Worker for PWA
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js')
+      .then(reg => console.log('✅ SW registered:', reg.scope))
+      .catch(err => console.log('❌ SW failed:', err));
+  });
+}
+</script>
+</body>
+</html>
