@@ -211,6 +211,20 @@ body {
 }
 .calendar-export-btn:hover { background: #3A82EB; }
 .calendar-export-btn:active { background: #2A72DB; }
+.share-menu-btn {
+  padding: 7px 16px;
+  border-radius: 8px;
+  border: 2px solid #D0D0D0;
+  background: #4CAF50;
+  color: white;
+  cursor: pointer;
+  font-size: 13px;
+  font-family: var(--font);
+  font-weight: 700;
+  transition: all 0.15s ease;
+}
+.share-menu-btn:hover { background: #43A047; }
+.share-menu-btn:active { background: #388E3C; }
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
@@ -829,6 +843,7 @@ body {
   .calendar-nav-btn { width: 32px; height: 32px; font-size: 14px; }
   .calendar-today-btn,
   .calendar-export-btn { font-size: 11px; padding: 6px 10px; }
+  .share-menu-btn { font-size: 11px; padding: 6px 10px; }
 
   /* --- Calendar Grid: compact cells --- */
   .calendar-grid {
@@ -1046,6 +1061,7 @@ body {
         <button class="calendar-today-btn" onclick="goToday()">今天</button>
         <button class="calendar-today-btn" style="background:var(--danger-light);color:var(--danger);" onclick="showClearOptions()">清除</button>
         <button class="calendar-export-btn" onclick="exportCalendarImage()">导出</button>
+        <button class="calendar-today-btn share-menu-btn" id="shareMenuBtn" onclick="shareMenuCard(selectedDate || todayStr)">今日食谱</button>
       </div>
     </div>
     <div class="calendar-grid" id="calendarGrid"></div>
@@ -1738,7 +1754,6 @@ function openDayModal(dateStr) {
         ${statsHtml}
         <div style="text-align:center;margin-top:14px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
           <button class="btn btn-outline btn-sm" onclick="showClearForDate('${dateStr}')" style="color:var(--danger);border-color:var(--danger);">清除</button>
-          <button class="btn btn-sm" id="shareCardBtn" onclick="shareMenuCard('${dateStr}')" style="background:var(--success);color:white;border-color:#4aab56;">📤 分享食谱</button>
           <button class="btn btn-sm" onclick="closeModal()" style="background:var(--black);color:white;border-color:var(--black);">关闭</button>
         </div>
       </div>
@@ -3537,7 +3552,7 @@ async function shareMenuCard(dateStr) {
     return;
   }
 
-  const btn = document.getElementById('shareCardBtn');
+  const btn = document.getElementById('shareMenuBtn');
   if (btn) { btn.textContent = '生成中...'; btn.disabled = true; }
 
   // ---- build date label ----
@@ -3688,7 +3703,7 @@ async function shareMenuCard(dateStr) {
     showToast('保存失败，请重试');
   } finally {
     wrap.remove();
-    if (btn) { btn.textContent = '📤 分享食谱'; btn.disabled = false; }
+    if (btn) { btn.textContent = '今日食谱'; btn.disabled = false; }
   }
 }
 
