@@ -782,26 +782,231 @@ body {
   font-weight: 700;
 }
 
-/* ===== Responsive ===== */
+/* ===== Responsive - Mobile First Optimization ===== */
 @media (max-width: 640px) {
-  .header { padding: 12px 16px; }
-  .header-title { font-size: 18px; }
-  .header-subtitle { font-size: 11px; }
-  .tab { padding: 12px 14px; font-size: 13px; }
-  .calendar-day { min-height: 55px; padding: 2px; font-size: 10px; }
-  .calendar-day .day-num { font-size: 11px; }
-  .calendar-grid { padding: 5px; gap: 2px; }
-  .calendar-header { flex-direction: column; align-items: flex-start; }
-  .ingredient-grid { grid-template-columns: repeat(2, 1fr); }
-  .recipe-list { grid-template-columns: 1fr; }
+  /* --- Global --- */
+  body { font-size: 14px; -webkit-tap-highlight-color: transparent; }
+  .panel { padding: 0 8px; margin: 10px auto; }
+
+  /* --- Header: stack vertically --- */
+  .header {
+    padding: 10px 12px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .header-left { gap: 8px; }
+  .header-emoji { font-size: 28px; }
+  .header-title { font-size: 16px; }
+  .header-subtitle { font-size: 10px; }
+  .header-right { width: 100%; justify-content: flex-end; }
+  .header-right .header-btn { padding: 4px 10px; font-size: 11px; }
+
+  /* --- Tabs: horizontal scroll --- */
+  .tabs {
+    top: auto; /* sticky on mobile can cause issues */
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab {
+    padding: 10px 12px;
+    font-size: 12px;
+    flex-shrink: 0;
+    border-right: 1px solid var(--gray-200);
+  }
+  .tab:last-child { border-right: none; }
+
+  /* --- Calendar Header: compact --- */
+  .calendar-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  .calendar-nav { justify-content: center; }
+  .calendar-month { font-size: 17px; }
+  .calendar-nav-btn { width: 32px; height: 32px; font-size: 14px; }
+  .calendar-today-btn,
+  .calendar-export-btn { font-size: 11px; padding: 6px 10px; }
+
+  /* --- Calendar Grid: compact cells --- */
+  .calendar-grid {
+    padding: 4px;
+    gap: 2px;
+    border-width: 2px;
+    box-shadow: 2px 2px 0 var(--black);
+  }
+  .calendar-day-header { font-size: 10px; padding: 4px 0 5px; }
+  .calendar-day {
+    min-height: 62px;
+    padding: 2px 3px 3px;
+    border-width: 1.5px;
+    border-radius: 5px;
+    font-size: 9px;
+  }
+  .calendar-day .day-num { font-size: 10px; margin-bottom: 1px; }
+  .calendar-day .meal-tag {
+    font-size: 8px;
+    line-height: 1.3;
+    padding: 0 2px;
+    word-break: break-all;
+  }
+  .calendar-day .meal-tags { gap: 0; }
+
+  /* --- Day Modal: full-width on mobile --- */
+  .modal-overlay { align-items: flex-end; }
+  .modal {
+    width: 100%;
+    max-width: 100%;
+    max-height: 92vh;
+    border-radius: var(--radius) var(--radius) 0 0;
+    padding: 16px 12px;
+    border-width: 2px;
+  }
+  .modal h3 { font-size: 16px; margin-bottom: 12px; }
+  .form-group { margin-bottom: 10px; }
+  .form-label { font-size: 12px; }
+  .form-input, .form-select { padding: 8px 10px; font-size: 13px; border-radius: 8px; }
+  .btn { padding: 8px 14px; font-size: 12px; border-radius: 8px; }
+  .btn-sm { padding: 5px 10px; font-size: 11px; }
+
+  /* --- Meal Rows: compact --- */
+  .meal-row { padding: 8px 10px; gap: 6px; }
+  .meal-row .meal-slot-label { min-width: 52px; font-size: 11px; }
+  .meal-row .meal-slot-content { font-size: 12px; }
+  .meal-row .meal-slot-content.empty { font-size: 11px; }
+  .meal-row .meal-slot-action { font-size: 14px; }
+
+  /* --- Inline Meal Form: full width --- */
+  .inline-meal-form { padding: 10px; }
+  .inline-meal-form .ingredient-select-list { max-height: 120px; }
+  .ingredient-select-item { padding: 6px 8px; font-size: 12px; }
+
+  /* --- Selected Ingredients: compact tags --- */
+  .selected-ingredient-tag {
+    padding: 4px 8px;
+    font-size: 12px;
+  }
+  .selected-ingredient-tag input { width: 36px; font-size: 11px; }
+  .selected-ingredients { gap: 6px; padding: 6px; }
+
+  /* --- Daily Stats: 2-column grid --- */
+  .daily-stats { padding: 12px 14px; margin-top: 10px; }
+  .daily-stats-title { font-size: 13px; margin-bottom: 10px; }
+  .daily-stats [style*="grid-template-columns:repeat(4, 1fr)"] {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 6px !important;
+  }
+  .bar-row { padding: 8px 10px; }
+  .bar-label { font-size: 11px; }
+  .bar-track { height: 16px; }
+  .bar-value { font-size: 10px; }
+  .bar-value .val-num { font-size: 12px; }
+
+  /* --- Ingredient Grid: 2 columns --- */
+  .ingredient-toolbar {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .ingredient-toolbar > div:first-child {
+    margin-left: 0 !important;
+    width: 100%;
+  }
+  .ingredient-toolbar select {
+    flex: 1;
+    min-width: 0 !important;
+    font-size: 12px !important;
+  }
+  .ingredient-toolbar .btn-primary {
+    width: 100%;
+    justify-content: center;
+  }
+  .ingredient-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+  .ingredient-card {
+    padding: 8px 10px;
+    gap: 6px 8px;
+  }
+  .ingredient-emoji { font-size: 24px; }
+  .ingredient-name { font-size: 13px; }
+  .ingredient-category { font-size: 10px; }
+  .ingredient-status-badge { font-size: 10px; padding: 2px 6px; }
+  .ingredient-date { font-size: 10px; }
+  .ingredient-pref .pref-btn { font-size: 16px; }
+
+  /* --- Recipe List: single column --- */
+  .recipe-list { grid-template-columns: 1fr; gap: 10px; }
+  .recipe-card { padding: 14px; }
+  .recipe-name { font-size: 15px; }
+  .recipe-card-header { margin-bottom: 8px; }
+  .recipe-tags { gap: 4px; margin-bottom: 8px; }
+  .meal-ingredient-tag { padding: 4px 8px; font-size: 11px; }
+  .recipe-record-btn { padding: 10px; font-size: 13px; }
+
+  /* Recipe search bar on mobile */
+  #panel-recipes > div:first-child {
+    flex-wrap: wrap;
+  }
+  #recipeSearch {
+    width: 100% !important;
+    flex-shrink: 0 !important;
+  }
+  #recipeCatFilterSelect {
+    flex: 1;
+  }
+
+  /* --- Stats Page: stack layout --- */
+  #statsOverview [style*="grid-template-columns:repeat(auto-fit, minmax(160px, 1fr))"] {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px !important;
+  }
+  #statsOverview [style*="1fr 1fr"] {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+  #statsOverview [style*="grid-template-columns:repeat(auto-fit, minmax(120px, 1fr))"] {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px !important;
+  }
+
+  /* --- Modal forms on mobile --- */
+  .form-row { flex-direction: column; gap: 8px; }
+  .form-actions { flex-wrap: wrap; gap: 6px; }
+  .form-actions .btn { flex: 1; min-width: 80px; }
+
+  /* --- Toast --- */
+  #copyToast { font-size: 12px; padding: 8px 18px; top: 12px; }
+
+  /* --- Alert / Allergy Banner --- */
+  .allergy-banner { padding: 10px 14px; font-size: 12px; }
+
+  /* --- Bar Chart (modal stats) --- */
   .bar-chart { grid-template-columns: 1fr 1fr; gap: 6px; }
-  .daily-stats-title { font-size: 13px; }
+
+  /* --- Copy dialog compact --- */
+  #copySourceMeal, #copyTargetDate, #copyTargetSlot {
+    font-size: 12px !important;
+  }
 }
 </style>
 </head>
 <body>
-<!-- html2canvas CDN for calendar image export -->
-<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<!-- html2canvas - multiple CDN fallback for China access -->
+<script>
+(function(){
+  var s=document.createElement('script');
+  s.src='https://cdn.bootcdn.net/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+  s.onerror=function(){
+    var s2=document.createElement('script');
+    s2.src='https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
+    document.head.appendChild(s2);
+  };
+  document.head.appendChild(s);
+})();
+</script>
 
 <!-- Header -->
 <div class="header">

@@ -1,5 +1,5 @@
 // Service Worker for 辣堡辅食日记 PWA
-const CACHE_NAME = 'baby-food-diary-v1';
+const CACHE_NAME = 'baby-food-diary-v2';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -30,8 +30,26 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Fetch: network-first strategy (IndexedDB handles data, SW only caches the app shell)
+// Fetch: network-first with runtime caching for CDN scripts
 self.addEventListener('fetch', (event) => {
+  const url = event.request.url;
+
+  // Cache CDN scripts (html2canvas) for offline use
+  if (url.includes('html2canvas') || url.includes('bootcdn')) {
+    event.respondWith(
+      caches.match(event.request).then((cached) => {
+        return cached || fetch(event.request).then((response) => {
+          return caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, response.clone());
+            return response;
+          });
+        });
+      })
+    );
+    return;
+  }
+
+  // Network-first for everything else
   event.respondWith(
     fetch(event.request).catch(() => {
       return caches.match(event.request);
