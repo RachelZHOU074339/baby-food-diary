@@ -3547,14 +3547,14 @@ function shareMenuCard(dateStr) {
     var weekDays = ['日', '一', '二', '三', '四', '五', '六'];
     var dateLabel = d.getFullYear() + '年' + (d.getMonth()+1) + '月' + d.getDate() + '日 · 星期' + weekDays[d.getDay()];
 
-    // baby age
+    // baby age (辣堡: 2025-09-26)
     var ageLabel = '';
-    if (babyInfo && babyInfo.birthDate) {
-      var bd = new Date(babyInfo.birthDate);
-      var diffDays = Math.floor((d - bd) / 86400000);
+    var bd = new Date('2025-09-26');
+    var diffDays = Math.floor((d - bd) / 86400000);
+    if (diffDays >= 0) {
       var months = Math.floor(diffDays / 30.44);
       var days = Math.floor(diffDays - months * 30.44);
-      ageLabel = '宝宝 ' + months + ' 个月 ' + days + ' 天';
+      ageLabel = '辣堡 ' + months + ' 个月 ' + days + ' 天';
     }
 
     // totals
