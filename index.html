@@ -1265,6 +1265,28 @@ const NUTRITION_TARGETS = {
     油脂: { min: 1, max: 3, unit: '滴', label: '1~3滴' },
     其他: { unit: 'g', label: '—' },
   },
+  3: {
+    奶量: { label: '600ml', unit: 'ml', customLabel: true },
+    谷类: { min: 15, max: 30, unit: 'g', label: '15~30g' },
+    蔬菜: { min: 20, max: 30, unit: 'g', label: '20~30g' },
+    水果: { min: 20, max: 30, unit: 'g', label: '20~30g' },
+    肉类: { min: 15, max: 30, unit: 'g', label: '15~30g' },
+    水产: { min: 15, max: 30, unit: 'g', label: '15~30g' },
+    蛋类: { label: '1个蛋黄', unit: '个', customLabel: true },
+    油脂: { min: 3, max: 5, unit: 'g', label: '3~5g' },
+    其他: { unit: 'g', label: '—' },
+  },
+  4: {
+    奶量: { label: '600ml', unit: 'ml', customLabel: true },
+    谷类: { min: 30, max: 40, unit: 'g', label: '30~40g' },
+    蔬菜: { min: 30, max: 45, unit: 'g', label: '30~45g' },
+    水果: { min: 30, max: 45, unit: 'g', label: '30~45g' },
+    肉类: { min: 30, max: 45, unit: 'g', label: '30~45g' },
+    水产: { min: 30, max: 45, unit: 'g', label: '30~45g' },
+    蛋类: { label: '1个蛋黄', unit: '个', customLabel: true },
+    油脂: { min: 3, max: 5, unit: 'g', label: '3~5g' },
+    其他: { unit: 'g', label: '—' },
+  },
 };
 
 // Calculate which feeding month we are in (1-indexed)
@@ -1624,8 +1646,8 @@ function createDayCell(day, dateStr, isOtherMonth) {
       if (isFuture && ing && ing.status === 'allergy' && ing.retryDate && ing.retryDate > dateStr) {
         return `<span style="color:var(--danger);font-weight:700;" title="⚠ 过敏食材！${ing.name}过敏，${ing.retryDate}后可重试">⚠${escapeHtml(shortName)}${weight}</span>`;
       }
-      // Bold only if: pending AND this is the first day this ingredient appears
-      const isFirstTime = ing && ing.status === 'pending' && isFirstTimeIngredient(i.name, dateStr);
+      // Bold if this is the first day this ingredient appears (any status)
+      const isFirstTime = isFirstTimeIngredient(i.name, dateStr);
       return isFirstTime
         ? `<strong>${escapeHtml(shortName)}${weight}</strong>`
         : `${escapeHtml(shortName)}${weight}`;
@@ -1705,7 +1727,7 @@ function openDayModal(dateStr) {
     if (meal) {
       const ingHtml = (meal.ingredients || []).map(i => {
         const ing = allIngredients.find(ig => ig.name === i.name);
-        const isFirst = ing && ing.status === 'pending' && isFirstTimeIngredient(i.name, dateStr);
+        const isFirst = isFirstTimeIngredient(i.name, dateStr);
         return isFirst
           ? `<strong>${escapeHtml(i.name)} ${i.weight}${i.unit||'g'}</strong>`
           : `${escapeHtml(i.name)} ${i.weight}${i.unit||'g'}`;
@@ -2054,20 +2076,24 @@ function buildDailyStatsHtml(dateStr) {
   const feedingMonth = getFeedingMonth(dateStr);
   const targets = getNutritionTargets(dateStr);
 
-  const categories = [
-    { key: '谷类', emoji: '🥯' },
-    { key: '蔬菜', emoji: '🥬' },
-    { key: '水果', emoji: '🍎' },
-    { key: '肉类', emoji: '🥩' },
-    { key: '水产', emoji: '🐟' },
-    { key: '蛋类', emoji: '🥚' },
-    { key: '油脂', emoji: '🧈' },
-    { key: '其他', emoji: '🧀' },
+  const allCats = [
+    { key: '谷类', emoji: '🥯', unit: 'g' },
+    { key: '蔬菜', emoji: '🥬', unit: 'g' },
+    { key: '水果', emoji: '🍎', unit: 'g' },
+    { key: '肉类', emoji: '🥩', unit: 'g' },
+    { key: '水产', emoji: '🐟', unit: 'g' },
+    { key: '蛋类', emoji: '🥚', unit: 'g' },
+    { key: '油脂', emoji: '🧈', unit: 'g' },
+    { key: '其他', emoji: '🧀', unit: 'g' },
   ];
 
-  let html = `<div style="background:var(--gray-50);border-radius:var(--radius-sm);padding:12px;margin-top:16px;"><h4 style="font-size:14px;margin-bottom:10px;">今日营养摄入 <span style="font-size:11px;color:var(--primary);font-weight:400;">（第${feedingMonth}个月目标）</span></h4><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;">`;
+  // Milk target: display inline after the title if defined
+  const milkTarget = targets['奶量'];
+  const milkLabel = milkTarget && milkTarget.label ? ` | 🍼 奶量 ${milkTarget.label}` : '';
 
-  categories.forEach(cat => {
+  let html = `<div style="background:var(--gray-50);border-radius:var(--radius-sm);padding:12px;margin-top:16px;"><h4 style="font-size:14px;margin-bottom:10px;">今日营养摄入 <span style="font-size:11px;color:var(--primary);font-weight:400;">（第${feedingMonth}个月目标${milkLabel}）</span></h4><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;">`;
+
+  allCats.forEach(cat => {
     const val = totals[cat.key] || 0;
     const target = targets[cat.key] || {};
     const minT = target.min !== undefined ? target.min : null;
@@ -2092,7 +2118,7 @@ function buildDailyStatsHtml(dateStr) {
       else status = '<span style="color:var(--info);font-size:11px;">已摄入</span>';
     }
 
-    const unit = cat.key === '油脂' ? '滴' : 'g';
+    const unit = cat.unit || 'g';
     html += `<div style="background:white;border-radius:6px;padding:8px;text-align:center;">
       <div>${cat.emoji} ${cat.key}</div>
       <div style="font-size:18px;font-weight:700;">${val}${unit}</div>
@@ -2462,21 +2488,25 @@ function renderDailyStats() {
   const feedingMonth = getFeedingMonth(selectedDate);
   const targets = getNutritionTargets(selectedDate);
 
-  const categories = [
-    { key: '谷类', emoji: '🥯' },
-    { key: '蔬菜', emoji: '🥬' },
-    { key: '水果', emoji: '🍎' },
-    { key: '肉类', emoji: '🥩' },
-    { key: '水产', emoji: '🐟' },
-    { key: '蛋类', emoji: '🥚' },
-    { key: '油脂', emoji: '🧈' },
-    { key: '其他', emoji: '🧀' },
+  const allCats = [
+    { key: '谷类', emoji: '🥯', unit: 'g' },
+    { key: '蔬菜', emoji: '🥬', unit: 'g' },
+    { key: '水果', emoji: '🍎', unit: 'g' },
+    { key: '肉类', emoji: '🥩', unit: 'g' },
+    { key: '水产', emoji: '🐟', unit: 'g' },
+    { key: '蛋类', emoji: '🥚', unit: 'g' },
+    { key: '油脂', emoji: '🧈', unit: 'g' },
+    { key: '其他', emoji: '🧀', unit: 'g' },
   ];
 
-  let html = `<div class="daily-stats-title">今日营养摄入 <span style="font-size:11px;color:var(--primary);font-weight:400;">（第${feedingMonth}个月目标）</span></div>`;
+  // Milk target: display inline after the title if defined
+  const milkTarget = targets['奶量'];
+  const milkLabel = milkTarget && milkTarget.label ? ` | 🍼 奶量 ${milkTarget.label}` : '';
+
+  let html = `<div class="daily-stats-title">今日营养摄入 <span style="font-size:11px;color:var(--primary);font-weight:400;">（第${feedingMonth}个月目标${milkLabel}）</span></div>`;
   html += '<div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:10px;">';
 
-  categories.forEach(cat => {
+  allCats.forEach(cat => {
     const val = totals[cat.key] || 0;
     const target = targets[cat.key] || {};
     const minT = target.min !== undefined ? target.min : null;
@@ -2500,7 +2530,7 @@ function renderDailyStats() {
         statusColor = 'var(--info)'; statusText = '已摄入';
       }
     }
-    const unit = cat.key === '油脂' ? '滴' : 'g';
+    const unit = cat.unit || 'g';
     const divisor = hasTarget && !isCustom ? (hasMax ? maxT : (minT || 10)) : Math.max(val, 5);
     const maxPercent = Math.min(100, Math.round(val / divisor * 100));
 
