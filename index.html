@@ -1386,6 +1386,8 @@ async function init() {
   setupFilters();
   // Repair: ensure all meal ingredients have corresponding entries in ingredient DB
   await repairMissingIngredients();
+  // Repair: mark pending ingredients as safe if they already appear in meal records
+  await repairPendingToSafe();
   await loadAllData();
   renderCalendar();
   renderDailyStats();
@@ -1606,6 +1608,8 @@ function createDayCell(day, dateStr, isOtherMonth) {
   const dayMeals = allMeals.filter(m => m.date === dateStr).sort((a, b) => a.mealNumber - b.mealNumber);
   const tagsDiv = document.createElement('div');
   tagsDiv.className = 'meal-tags';
+  // Check if this date is in the future (for allergy warning)
+  const isFuture = dateStr > todayStr;
   for (let slot = 1; slot <= 4; slot++) {
     const meal = dayMeals.find(m => m.mealNumber === slot);
     if (!meal) continue;
@@ -1616,6 +1620,10 @@ function createDayCell(day, dateStr, isOtherMonth) {
       const shortName = i.name.length > 2 ? i.name.slice(0, 2) : i.name;
       const ing = allIngredients.find(ig => ig.name === i.name);
       const weight = i.weight ? i.weight : '';
+      // Allergy warning: future date + ingredient is allergic + not yet past retry date
+      if (isFuture && ing && ing.status === 'allergy' && ing.retryDate && ing.retryDate > dateStr) {
+        return `<span style="color:var(--danger);font-weight:700;" title="⚠ 过敏食材！${ing.name}过敏，${ing.retryDate}后可重试">⚠${escapeHtml(shortName)}${weight}</span>`;
+      }
       // Bold only if: pending AND this is the first day this ingredient appears
       const isFirstTime = ing && ing.status === 'pending' && isFirstTimeIngredient(i.name, dateStr);
       return isFirstTime
@@ -2125,13 +2133,23 @@ function buildInlineForm(slot, mealName, notes, editId) {
   if (!form) return;
   form.classList.add('open');
 
-  const safeIngredients = allIngredients.filter(i => i.status === 'safe' || i.status === 'pending');
+  const safeIngredients = allIngredients.filter(i => {
+    if (i.status === 'safe' || i.status === 'pending') return true;
+    // Allergy ingredient: only show if retry date has passed (3 months after allergy)
+    if (i.status === 'allergy' && i.retryDate && i.retryDate <= selectedDate) return true;
+    return false;
+  });
   const ingredientOptions = safeIngredients.map(ing => {
     const catInfo = INGREDIENT_CATEGORIES[ing.category] || { emoji: '📦' };
     const selected = window._selectedMealIngredients[ing.id] ? ' selected' : '';
-    const statusBadge = ing.status === 'pending'
-      ? '<span style="color:var(--warning);font-size:11px;">⚠新</span>'
-      : (ing.status === 'safe' ? '<span style="color:var(--success);font-size:11px;">✓</span>' : '<span style="color:var(--danger);font-size:11px;">✕</span>');
+    let statusBadge = '';
+    if (ing.status === 'pending') {
+      statusBadge = '<span style="color:var(--warning);font-size:11px;">⚠新</span>';
+    } else if (ing.status === 'safe') {
+      statusBadge = '<span style="color:var(--success);font-size:11px;">✓</span>';
+    } else if (ing.status === 'allergy') {
+      statusBadge = '<span style="color:var(--danger);font-size:11px;" title="已过过敏观察期，可重新尝试">🔄</span>';
+    }
     return `<div class="ingredient-select-item${selected}" data-id="${ing.id}" data-name="${escapeHtml(ing.name)}" data-cat="${ing.category}" onclick="toggleIngredientSelect(this)">
       <span>${catInfo.emoji} ${escapeHtml(ing.name)} <span style="font-size:11px;color:var(--gray-400)">${ing.category}</span></span>
       ${statusBadge}
@@ -2161,6 +2179,23 @@ function buildInlineForm(slot, mealName, notes, editId) {
   renderSelectedIngredients();
 }
 
+// Auto-mark ingredients as "safe" after first real feed (today or past, not future)
+// allergyDate = the earliest date this ingredient appears in meal records
+async function autoMarkSafe(ingredientNames) {
+  for (const name of ingredientNames) {
+    const ing = allIngredients.find(i => i.name === name && i.status === 'pending');
+    if (!ing) continue;
+    // Only mark safe if the feed date is today or in the past
+    if (selectedDate > todayStr) continue;
+    // Find the earliest date this ingredient appears in meal records
+    const dates = allMeals.filter(m => (m.ingredients || []).some(i => i.name === name)).map(m => m.date).sort();
+    const firstDate = dates[0] || selectedDate;
+    ing.status = 'safe';
+    ing.allergyDate = firstDate;
+    await dbPut('ingredients', ing);
+  }
+}
+
 function closeInlineForm() {
   document.querySelectorAll('.inline-meal-form.open').forEach(f => { f.classList.remove('open'); f.innerHTML = ''; });
   _editMealId = null;
@@ -2180,6 +2215,9 @@ async function saveMealInline(slot) {
     notes: notes || null, createdAt: new Date().toISOString()
   });
 
+  // Auto-mark pending ingredients as safe after first feed
+  await autoMarkSafe(ingredients.map(i => i.name));
+
   await loadAllData();
   closeInlineForm();
   renderCalendar();
@@ -2191,12 +2229,24 @@ async function updateMealInline(id, slot) {
   const meal = allMeals.find(m => m.id === id);
   if (!meal) return;
   meal.notes = document.getElementById('mealNotes').value.trim() || null;
-  meal.ingredients = Object.values(window._selectedMealIngredients).map(i => ({
+  const newIngredients = Object.values(window._selectedMealIngredients).map(i => ({
     name: i.name, weight: i.weight, unit: i.unit
   }));
-  if (meal.ingredients.length === 0) { alert('请至少选择一种食材'); return; }
+  if (newIngredients.length === 0) { alert('请至少选择一种食材'); return; }
 
+  // Collect new ingredient names for auto-marking
+  const oldNames = (meal.ingredients || []).map(i => i.name);
+  const newNames = newIngredients.map(i => i.name);
+  const addedNames = newNames.filter(n => !oldNames.includes(n));
+
+  meal.ingredients = newIngredients;
   await dbPut('meals', meal);
+
+  // Auto-mark newly added ingredients as safe
+  if (addedNames.length > 0) {
+    await autoMarkSafe(addedNames);
+  }
+
   await loadAllData();
   closeInlineForm();
   renderCalendar();
@@ -2768,6 +2818,36 @@ async function repairMissingIngredients() {
       createdAt: todayStr
     });
     console.log(`🔧 自动补全缺失食材: "${name}"`);
+  }
+}
+
+async function repairPendingToSafe() {
+  // Only mark as safe if the ingredient has been fed today or in the past (not future dates)
+  // allergyDate = earliest date the ingredient appears in meal records
+  const fedMap = {}; // name -> earliestDate
+  for (const meal of allMeals) {
+    for (const mi of (meal.ingredients || [])) {
+      if (!mi.name) continue;
+      if (!fedMap[mi.name] || meal.date < fedMap[mi.name]) {
+        fedMap[mi.name] = meal.date;
+      }
+    }
+  }
+  let changed = 0;
+  for (const ing of allIngredients) {
+    if (ing.status !== 'pending') continue;
+    const firstDate = fedMap[ing.name];
+    if (!firstDate) continue;
+    // Only mark safe if the first feed date is today or past
+    if (firstDate > todayStr) continue;
+    ing.status = 'safe';
+    ing.allergyDate = firstDate;
+    await dbPut('ingredients', ing);
+    changed++;
+    console.log(`🔧 自动标记已排敏: "${ing.name}" (首次 ${firstDate})`);
+  }
+  if (changed > 0) {
+    console.log(`✅ 共自动标记 ${changed} 种食材为已排敏`);
   }
 }
 
