@@ -1736,8 +1736,9 @@ function openDayModal(dateStr) {
         </div>
         <div style="margin-top:12px;">${slotsHtml}</div>
         ${statsHtml}
-        <div style="text-align:center;margin-top:14px;display:flex;gap:8px;justify-content:center;">
+        <div style="text-align:center;margin-top:14px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
           <button class="btn btn-outline btn-sm" onclick="showClearForDate('${dateStr}')" style="color:var(--danger);border-color:var(--danger);">清除</button>
+          <button class="btn btn-sm" id="shareCardBtn" onclick="shareMenuCard('${dateStr}')" style="background:var(--success);color:white;border-color:#4aab56;">📤 分享食谱</button>
           <button class="btn btn-sm" onclick="closeModal()" style="background:var(--black);color:white;border-color:var(--black);">关闭</button>
         </div>
       </div>
@@ -3525,6 +3526,169 @@ async function exportCalendarImage() {
   } finally {
     btn.textContent = origText;
     btn.disabled = false;
+  }
+}
+
+// ===== Share Menu Card =====
+async function shareMenuCard(dateStr) {
+  const dayMeals = allMeals.filter(m => m.date === dateStr).sort((a, b) => a.mealNumber - b.mealNumber);
+  if (dayMeals.length === 0) {
+    alert('当天还没有辅食记录，先添加再分享吧～');
+    return;
+  }
+
+  const btn = document.getElementById('shareCardBtn');
+  if (btn) { btn.textContent = '生成中...'; btn.disabled = true; }
+
+  // ---- build date label ----
+  const d = new Date(dateStr);
+  const weekDays = ['日', '一', '二', '三', '四', '五', '六'];
+  const dateLabel = `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日 · 星期${weekDays[d.getDay()]}`;
+
+  // ---- compute baby age ----
+  const birthDate = babyInfo && babyInfo.birthDate ? new Date(babyInfo.birthDate) : null;
+  let ageLabel = '';
+  if (birthDate) {
+    const diffMs = d - birthDate;
+    const diffDays = Math.floor(diffMs / 86400000);
+    const months = Math.floor(diffDays / 30.44);
+    const days = Math.floor(diffDays - months * 30.44);
+    ageLabel = `宝宝 ${months} 个月 ${days} 天`;
+  }
+
+  // ---- meal slot icons ----
+  const slotIcons = ['🌅', '☀️', '🌤️', '🌙'];
+  const slotNames = ['第1顿', '第2顿', '第3顿', '第4顿'];
+
+  // ---- build card HTML ----
+  const cardId = '_shareCardCanvas';
+  let old = document.getElementById(cardId);
+  if (old) old.remove();
+
+  const wrap = document.createElement('div');
+  wrap.id = cardId;
+  wrap.style.cssText = [
+    'position:fixed',
+    'left:-9999px',
+    'top:0',
+    'width:360px',
+    'background:#FFFDF7',
+    'font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif',
+    'border-radius:20px',
+    'overflow:hidden',
+    'box-shadow:0 8px 32px rgba(0,0,0,0.15)',
+  ].join(';');
+
+  // --- header ---
+  let mealsHtml = '';
+  for (let idx = 0; idx < dayMeals.length; idx++) {
+    const meal = dayMeals[idx];
+    const slotIdx = (meal.mealNumber || idx + 1) - 1;
+    const icon = slotIcons[slotIdx] || '🍽️';
+    const slotName = slotNames[slotIdx] || `第${meal.mealNumber}顿`;
+
+    const ingLines = (meal.ingredients || []).map(i => {
+      return `<span style="display:inline-block;background:#FFF0F2;border:1.5px solid #F7B3BE;border-radius:20px;padding:3px 10px;margin:2px 3px 2px 0;font-size:13px;color:#C4102E;font-weight:600;">${i.name} <span style="font-weight:400;color:#888;">${i.weight || ''}${i.unit || 'g'}</span></span>`;
+    }).join('');
+
+    mealsHtml += `
+      <div style="margin-bottom:14px;background:white;border-radius:14px;border:2px solid #F0EDE0;padding:12px 14px;">
+        <div style="font-size:13px;font-weight:800;color:#1A1A1A;margin-bottom:8px;display:flex;align-items:center;gap:6px;">
+          <span style="font-size:20px;">${icon}</span>
+          <span>${slotName}</span>
+          ${meal.mealName ? `<span style="font-size:11px;font-weight:500;color:#888;margin-left:4px;">${meal.mealName}</span>` : ''}
+        </div>
+        <div style="line-height:1.8;">${ingLines || '<span style="color:#aaa;font-size:13px;">暂无记录</span>'}</div>
+        ${meal.notes ? `<div style="margin-top:6px;font-size:11px;color:#888;font-style:italic;">备注：${meal.notes}</div>` : ''}
+      </div>
+    `;
+  }
+
+  // total stats
+  const totals = {};
+  dayMeals.forEach(m => {
+    (m.ingredients || []).forEach(i => {
+      totals[i.name] = (totals[i.name] || 0) + (i.weight || 0);
+    });
+  });
+  const totalGrams = Object.values(totals).reduce((s, v) => s + v, 0);
+  const totalIngCount = Object.keys(totals).length;
+
+  wrap.innerHTML = `
+    <!-- Header -->
+    <div style="background:#E31837;padding:20px 20px 16px;color:white;text-align:center;">
+      <div style="font-size:28px;margin-bottom:4px;">🥣</div>
+      <div style="font-size:18px;font-weight:800;letter-spacing:0.5px;">辣堡今日辅食</div>
+      <div style="font-size:12px;margin-top:4px;opacity:0.85;">${dateLabel}</div>
+      ${ageLabel ? `<div style="font-size:11px;margin-top:2px;opacity:0.75;">${ageLabel}</div>` : ''}
+    </div>
+
+    <!-- Meals -->
+    <div style="padding:16px 16px 8px;">
+      ${mealsHtml}
+    </div>
+
+    <!-- Summary bar -->
+    <div style="margin:0 16px 16px;background:#F9F6ED;border-radius:12px;padding:10px 16px;display:flex;justify-content:space-around;border:2px solid #E8E3CE;">
+      <div style="text-align:center;">
+        <div style="font-size:20px;font-weight:800;color:#E31837;">${dayMeals.length}</div>
+        <div style="font-size:10px;color:#888;margin-top:2px;">顿辅食</div>
+      </div>
+      <div style="width:1.5px;background:#E8E3CE;"></div>
+      <div style="text-align:center;">
+        <div style="font-size:20px;font-weight:800;color:#E31837;">${totalIngCount}</div>
+        <div style="font-size:10px;color:#888;margin-top:2px;">种食材</div>
+      </div>
+      <div style="width:1.5px;background:#E8E3CE;"></div>
+      <div style="text-align:center;">
+        <div style="font-size:20px;font-weight:800;color:#E31837;">${totalGrams}</div>
+        <div style="font-size:10px;color:#888;margin-top:2px;">克总量</div>
+      </div>
+    </div>
+
+    <!-- Footer watermark -->
+    <div style="text-align:center;padding:0 16px 14px;font-size:10px;color:#bbb;">
+      辣堡的辅食日记 · 用❤️记录每一口
+    </div>
+  `;
+
+  document.body.appendChild(wrap);
+
+  try {
+    if (typeof html2canvas !== 'function') {
+      alert('导出功能加载中，请稍后再试');
+      return;
+    }
+    const canvas = await html2canvas(wrap, {
+      backgroundColor: '#FFFDF7',
+      scale: 2.5,
+      useCORS: true,
+      logging: false,
+      width: 360,
+    });
+
+    // Try Web Share API first (mobile)
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+    if (navigator.share && navigator.canShare && navigator.canShare({ files: [new File([blob], 'menu.png', { type: 'image/png' })] })) {
+      const file = new File([blob], `辣堡辅食_${dateStr}.png`, { type: 'image/png' });
+      await navigator.share({
+        title: `辣堡今日辅食 · ${dateLabel}`,
+        files: [file],
+      });
+    } else {
+      // Fallback: download
+      const link = document.createElement('a');
+      link.download = `辣堡辅食_${dateStr}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      showToast('已保存图片，可转发到微信 ✓');
+    }
+  } catch (err) {
+    console.error('Share card failed:', err);
+    showToast('保存失败，请重试');
+  } finally {
+    wrap.remove();
+    if (btn) { btn.textContent = '📤 分享食谱'; btn.disabled = false; }
   }
 }
 
