@@ -1,5 +1,5 @@
 // Service Worker for 辣堡辅食日记 PWA
-const CACHE_NAME = 'baby-food-diary-v2';
+const CACHE_NAME = 'baby-food-diary-v3';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',

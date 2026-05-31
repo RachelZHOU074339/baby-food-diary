@@ -3573,7 +3573,7 @@ function shareMenuCard(dateStr) {
     var slotIcons = ['🌅', '☀️', '🌤️', '🌙'];
     var slotNames = ['第1顿', '第2顿', '第3顿', '第4顿'];
 
-    var estHeight = 200 + dayMeals.length * 180 + 120 + 50;
+    var estHeight = 200 + dayMeals.length * 200 + 120 + 50;
     estHeight = Math.max(estHeight, 700);
 
     var canvas = document.createElement('canvas');
@@ -3633,7 +3633,7 @@ function shareMenuCard(dateStr) {
       var slotName = slotNames[slotIdx] || ('第' + meal.mealNumber + '顿');
 
       var blockY = y;
-      var blockH = 155;
+      var blockH = 165;
       var ingredients = meal.ingredients || [];
 
       // block bg
@@ -3656,13 +3656,13 @@ function shareMenuCard(dateStr) {
       }
 
       // ingredients
-      ctx.font = '600 20px -apple-system, sans-serif';
-      var ingY = blockY + 78;
-      var tagH = 36;
-      var tagR = 18;
+      ctx.font = '600 22px -apple-system, sans-serif';
+      var ingY = blockY + 74;
+      var tagH = 42;
+      var tagR = 21;
       if (ingredients.length === 0) {
         ctx.fillStyle = '#aaa';
-        ctx.font = '19px -apple-system, sans-serif';
+        ctx.font = '20px -apple-system, sans-serif';
         ctx.fillText('暂无记录', padX + 20, ingY);
         ingY += tagH + 6;
       } else {
@@ -3670,25 +3670,26 @@ function shareMenuCard(dateStr) {
         ingredients.forEach(function(ing) {
           var txt = ing.name + ' ' + (ing.weight || '') + (ing.unit || 'g');
           var tw = ctx.measureText(txt).width;
-          var tagW = tw + 28;
+          var tagW = tw + 32;
           if (tagX + tagW > W - padX - 10) {
             tagX = padX + 20;
-            ingY += tagH + 8;
+            ingY += tagH + 10;
           }
-          // tag bg
+          // tag bg (centered on ingY)
+          var tagTop = ingY - tagH / 2;
           ctx.fillStyle = '#FFF0F2';
-          rrect(tagX, ingY - tagH + 5, tagW, tagH, tagR);
+          rrect(tagX, tagTop, tagW, tagH, tagR);
           ctx.fill();
           ctx.strokeStyle = '#F7B3BE';
           ctx.lineWidth = 2;
           ctx.stroke();
-          // tag text
+          // tag text (vertically centered)
           ctx.fillStyle = '#C4102E';
-          ctx.font = '600 18px -apple-system, sans-serif';
-          ctx.fillText(txt, tagX + 10, ingY + 4);
-          tagX += tagW + 8;
+          ctx.font = '600 22px -apple-system, sans-serif';
+          ctx.fillText(txt, tagX + 14, ingY + 7);
+          tagX += tagW + 10;
         });
-        ingY += tagH + 8;
+        ingY += tagH + 10;
       }
 
       // notes
@@ -3698,7 +3699,7 @@ function shareMenuCard(dateStr) {
         ctx.fillText('备注：' + meal.notes, padX + 20, ingY + 10);
       }
 
-      y = blockY + blockH + 18;
+      y = blockY + blockH + 22;
     });
 
     // Summary bar
