@@ -3753,34 +3753,47 @@ function shareMenuCard(dateStr) {
     tctx.fillRect(0, 0, W, y + 50);
     tctx.drawImage(canvas, 0, 0);
 
-    // Export
+    // Export: try Web Share API first (shows image preview), fallback to download
     trimmed.toBlob(function(blob) {
       if (!blob) {
         alert('生成图片失败，请重试');
         if (btn) { btn.textContent = '今日食谱'; btn.disabled = false; }
         return;
       }
-      var url = URL.createObjectURL(blob);
-      var link = document.createElement('a');
-      link.download = '辣堡辅食_' + dateStr + '.png';
-      link.href = url;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      setTimeout(function() { URL.revokeObjectURL(url); }, 5000);
-      showToast('图片已保存，可从相册发送到微信 ✓');
 
-      // Try Web Share API (iOS)
+      var shared = false;
+
+      // Try Web Share API first (iOS Safari shows image preview in WeChat)
       if (navigator.share && navigator.canShare) {
         try {
           var file = new File([blob], '辣堡辅食_' + dateStr + '.png', { type: 'image/png' });
           if (navigator.canShare({ files: [file] })) {
-            navigator.share({ title: '辣堡今日辅食', files: [file] }).catch(function() {});
+            navigator.share({ title: '辣堡今日辅食', files: [file] }).then(function() {
+              shared = true;
+              if (btn) { btn.textContent = '今日食谱'; btn.disabled = false; }
+            }).catch(function() {
+              // User cancelled or failed, fallback to download
+              fallbackDownload();
+            });
+            return; // wait for share promise
           }
         } catch(e) {}
       }
 
-      if (btn) { btn.textContent = '今日食谱'; btn.disabled = false; }
+      fallbackDownload();
+
+      function fallbackDownload() {
+        var url = URL.createObjectURL(blob);
+        var link = document.createElement('a');
+        link.download = '辣堡辅食_' + dateStr + '.png';
+        link.href = url;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(function() { URL.revokeObjectURL(url); }, 5000);
+        showToast('图片已保存，可从相册发送到微信 ✓');
+        if (btn) { btn.textContent = '今日食谱'; btn.disabled = false; }
+      }
     }, 'image/png');
 
   } catch (err) {
