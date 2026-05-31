@@ -1009,20 +1009,6 @@ body {
 </style>
 </head>
 <body>
-<!-- html2canvas - multiple CDN fallback for China access -->
-<script>
-(function(){
-  var s=document.createElement('script');
-  s.src='https://cdn.bootcdn.net/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
-  s.onerror=function(){
-    var s2=document.createElement('script');
-    s2.src='https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
-    document.head.appendChild(s2);
-  };
-  document.head.appendChild(s);
-})();
-</script>
-
 <!-- Header -->
 <div class="header">
   <div class="header-left">
@@ -3544,143 +3530,265 @@ async function exportCalendarImage() {
   }
 }
 
-// ===== Share Menu Card =====
-async function shareMenuCard(dateStr) {
-  const dayMeals = allMeals.filter(m => m.date === dateStr).sort((a, b) => a.mealNumber - b.mealNumber);
+// ===== Share Menu Card (Pure Canvas, no library) =====
+function shareMenuCard(dateStr) {
+  var dayMeals = allMeals.filter(function(m) { return m.date === dateStr; }).sort(function(a,b) { return a.mealNumber - b.mealNumber; });
   if (dayMeals.length === 0) {
     alert('当天还没有辅食记录，先添加再分享吧～');
     return;
   }
 
-  const btn = document.getElementById('shareMenuBtn');
+  var btn = document.getElementById('shareMenuBtn');
   if (btn) { btn.textContent = '生成中...'; btn.disabled = true; }
 
-  // ---- Wait for html2canvas to load ----
-  let retries = 0;
-  while (typeof html2canvas !== 'function' && retries < 30) {
-    await new Promise(r => setTimeout(r, 300));
-    retries++;
-  }
-  if (typeof html2canvas !== 'function') {
-    alert('导出功能加载中，请稍后再试（html2canvas 未加载）');
-    if (btn) { btn.textContent = '今日食谱'; btn.disabled = false; }
-    return;
-  }
-
-  // ---- build date label ----
-  const d = new Date(dateStr);
-  const weekDays = ['日', '一', '二', '三', '四', '五', '六'];
-  const dateLabel = `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日 · 星期${weekDays[d.getDay()]}`;
-
-  // ---- compute baby age ----
-  const birthDate = babyInfo && babyInfo.birthDate ? new Date(babyInfo.birthDate) : null;
-  let ageLabel = '';
-  if (birthDate) {
-    const diffMs = d - birthDate;
-    const diffDays = Math.floor(diffMs / 86400000);
-    const months = Math.floor(diffDays / 30.44);
-    const days = Math.floor(diffDays - months * 30.44);
-    ageLabel = `宝宝 ${months} 个月 ${days} 天`;
-  }
-
-  // ---- meal slot icons ----
-  const slotIcons = ['\uD83C\uDF05', '\u2600\uFE0F', '\uD83C\uDF24\uFE0F', '\uD83C\uDF19'];
-  const slotNames = ['第1顿', '第2顿', '第3顿', '第4顿'];
-
-  // ---- build card HTML ----
-  const cardId = '_shareCardCanvas';
-  let old = document.getElementById(cardId);
-  if (old) old.remove();
-
-  const wrap = document.createElement('div');
-  wrap.id = cardId;
-  wrap.style.cssText = 'position:fixed;left:-9999px;top:0;width:360px;background:#FFFDF7;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;border-radius:20px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.15);';
-
-  let mealsHtml = '';
-  for (let idx = 0; idx < dayMeals.length; idx++) {
-    const meal = dayMeals[idx];
-    const slotIdx = (meal.mealNumber || idx + 1) - 1;
-    const icon = slotIcons[slotIdx] || '\uD83C\uDF5D';
-    const slotName = slotNames[slotIdx] || '\u7B2C' + meal.mealNumber + '\u987F';
-
-    const ingHtml = (meal.ingredients || []).map(i => {
-      return '<span style="display:inline-block;background:#FFF0F2;border:1.5px solid #F7B3BE;border-radius:20px;padding:3px 10px;margin:2px 3px 2px 0;font-size:13px;color:#C4102E;font-weight:600;">' + escapeHtml(i.name) + ' <span style="font-weight:400;color:#888;">' + (i.weight || '') + (i.unit || 'g') + '</span></span>';
-    }).join('');
-
-    mealsHtml += '<div style="margin-bottom:14px;background:white;border-radius:14px;border:2px solid #F0EDE0;padding:12px 14px;">' +
-      '<div style="font-size:13px;font-weight:800;color:#1A1A1A;margin-bottom:8px;display:flex;align-items:center;gap:6px;">' +
-        '<span style="font-size:20px;">' + icon + '</span>' +
-        '<span>' + slotName + '</span>' +
-        (meal.mealName ? '<span style="font-size:11px;font-weight:500;color:#888;margin-left:4px;">' + escapeHtml(meal.mealName) + '</span>' : '') +
-      '</div>' +
-      '<div style="line-height:1.8;">' + (ingHtml || '<span style="color:#aaa;font-size:13px;">\u6682\u65E0\u8BB0\u5F55</span>') + '</div>' +
-      (meal.notes ? '<div style="margin-top:6px;font-size:11px;color:#888;font-style:italic;">\u5907\u6CE8\uFF1A' + escapeHtml(meal.notes) + '</div>' : '') +
-    '</div>';
-  }
-
-  const totals = {};
-  dayMeals.forEach(m => {
-    (m.ingredients || []).forEach(i => {
-      totals[i.name] = (totals[i.name] || 0) + (i.weight || 0);
-    });
-  });
-  const totalGrams = Object.values(totals).reduce((s, v) => s + v, 0);
-  const totalIngCount = Object.keys(totals).length;
-
-  wrap.innerHTML = '<div style="background:#E31837;padding:20px 20px 16px;color:white;text-align:center;">' +
-      '<div style="font-size:28px;margin-bottom:4px;">\uD83E\uDD63</div>' +
-      '<div style="font-size:18px;font-weight:800;letter-spacing:0.5px;">\u8FA3\u5821\u4ECA\u65E5\u8F85\u98DF</div>' +
-      '<div style="font-size:12px;margin-top:4px;opacity:0.85;">' + dateLabel + '</div>' +
-      (ageLabel ? '<div style="font-size:11px;margin-top:2px;opacity:0.75;">' + ageLabel + '</div>' : '') +
-    '</div>' +
-    '<div style="padding:16px 16px 8px;">' + mealsHtml + '</div>' +
-    '<div style="margin:0 16px 16px;background:#F9F6ED;border-radius:12px;padding:10px 16px;display:flex;justify-content:space-around;border:2px solid #E8E3CE;">' +
-      '<div style="text-align:center;"><div style="font-size:20px;font-weight:800;color:#E31837;">' + dayMeals.length + '</div><div style="font-size:10px;color:#888;margin-top:2px;">\u987F\u8F85\u98DF</div></div>' +
-      '<div style="width:1.5px;background:#E8E3CE;"></div>' +
-      '<div style="text-align:center;"><div style="font-size:20px;font-weight:800;color:#E31837;">' + totalIngCount + '</div><div style="font-size:10px;color:#888;margin-top:2px;">\u79CD\u98DF\u6750</div></div>' +
-      '<div style="width:1.5px;background:#E8E3CE;"></div>' +
-      '<div style="text-align:center;"><div style="font-size:20px;font-weight:800;color:#E31837;">' + totalGrams + '</div><div style="font-size:10px;color:#888;margin-top:2px;">\u514B\u603B\u91CF</div></div>' +
-    '</div>' +
-    '<div style="text-align:center;padding:0 16px 14px;font-size:10px;color:#bbb;">\u8FA3\u5821\u7684\u8F85\u98DF\u65E5\u8BB0 \u00B7 \u7528\u2764\uFE0F\u8BB0\u5F55\u6BCF\u4E00\u53E3</div>';
-
-  document.body.appendChild(wrap);
-
   try {
-    const canvas = await html2canvas(wrap, {
-      backgroundColor: '#FFFDF7',
-      scale: 2.5,
-      useCORS: true,
-      logging: false,
-      width: 360,
+    // date label
+    var d = new Date(dateStr);
+    var weekDays = ['日', '一', '二', '三', '四', '五', '六'];
+    var dateLabel = d.getFullYear() + '年' + (d.getMonth()+1) + '月' + d.getDate() + '日 · 星期' + weekDays[d.getDay()];
+
+    // baby age
+    var ageLabel = '';
+    if (babyInfo && babyInfo.birthDate) {
+      var bd = new Date(babyInfo.birthDate);
+      var diffDays = Math.floor((d - bd) / 86400000);
+      var months = Math.floor(diffDays / 30.44);
+      var days = Math.floor(diffDays - months * 30.44);
+      ageLabel = '宝宝 ' + months + ' 个月 ' + days + ' 天';
+    }
+
+    // totals
+    var totals = {};
+    dayMeals.forEach(function(m) {
+      (m.ingredients || []).forEach(function(i) {
+        totals[i.name] = (totals[i.name] || 0) + (i.weight || 0);
+      });
+    });
+    var totalGrams = 0;
+    Object.values(totals).forEach(function(v) { totalGrams += v; });
+    var totalIngCount = Object.keys(totals).length;
+
+    // canvas setup
+    var W = 720;
+    var slotIcons = ['🌅', '☀️', '🌤️', '🌙'];
+    var slotNames = ['第1顿', '第2顿', '第3顿', '第4顿'];
+
+    var estHeight = 200 + dayMeals.length * 180 + 120 + 50;
+    estHeight = Math.max(estHeight, 700);
+
+    var canvas = document.createElement('canvas');
+    canvas.width = W;
+    canvas.height = estHeight;
+    var ctx = canvas.getContext('2d');
+
+    // Background
+    ctx.fillStyle = '#FFFDF7';
+    ctx.fillRect(0, 0, W, estHeight);
+
+    // Header (red wave)
+    ctx.fillStyle = '#E31837';
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(W, 0);
+    ctx.lineTo(W, 150);
+    ctx.quadraticCurveTo(W/2, 185, 0, 150);
+    ctx.closePath();
+    ctx.fill();
+
+    // Header text
+    ctx.fillStyle = 'white';
+    ctx.textAlign = 'center';
+    ctx.font = 'bold 38px -apple-system, sans-serif';
+    ctx.fillText('🥣 辣堡今日辅食', W/2, 62);
+    ctx.font = '22px -apple-system, sans-serif';
+    ctx.fillText(dateLabel, W/2, 102);
+    if (ageLabel) {
+      ctx.font = '18px -apple-system, sans-serif';
+      ctx.fillText(ageLabel, W/2, 132);
+    }
+
+    // Helper: draw rounded rect
+    function rrect(x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + w - r, y);
+      ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+      ctx.lineTo(x + w, y + h - r);
+      ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+      ctx.lineTo(x + r, y + h);
+      ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+      ctx.lineTo(x, y + r);
+      ctx.quadraticCurveTo(x, y, x + r, y);
+      ctx.closePath();
+    }
+
+    // Meal blocks
+    var y = 195;
+    var padX = 50;
+    var blockW = W - padX * 2;
+
+    dayMeals.forEach(function(meal, idx) {
+      var slotIdx = (meal.mealNumber || idx + 1) - 1;
+      var icon = slotIcons[slotIdx] || '🍽️';
+      var slotName = slotNames[slotIdx] || ('第' + meal.mealNumber + '顿');
+
+      var blockY = y;
+      var blockH = 155;
+      var ingredients = meal.ingredients || [];
+
+      // block bg
+      ctx.fillStyle = 'white';
+      rrect(padX, blockY, blockW, blockH, 18);
+      ctx.fill();
+      ctx.strokeStyle = '#F0EDE0';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      // slot label
+      ctx.fillStyle = '#1A1A1A';
+      ctx.font = 'bold 24px -apple-system, sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText(icon + ' ' + slotName, padX + 20, blockY + 40);
+      if (meal.mealName) {
+        ctx.fillStyle = '#888';
+        ctx.font = '500 18px -apple-system, sans-serif';
+        ctx.fillText(meal.mealName, padX + 170, blockY + 40);
+      }
+
+      // ingredients
+      ctx.font = '600 20px -apple-system, sans-serif';
+      var ingY = blockY + 78;
+      var tagH = 36;
+      var tagR = 18;
+      if (ingredients.length === 0) {
+        ctx.fillStyle = '#aaa';
+        ctx.font = '19px -apple-system, sans-serif';
+        ctx.fillText('暂无记录', padX + 20, ingY);
+        ingY += tagH + 6;
+      } else {
+        var tagX = padX + 20;
+        ingredients.forEach(function(ing) {
+          var txt = ing.name + ' ' + (ing.weight || '') + (ing.unit || 'g');
+          var tw = ctx.measureText(txt).width;
+          var tagW = tw + 28;
+          if (tagX + tagW > W - padX - 10) {
+            tagX = padX + 20;
+            ingY += tagH + 8;
+          }
+          // tag bg
+          ctx.fillStyle = '#FFF0F2';
+          rrect(tagX, ingY - tagH + 5, tagW, tagH, tagR);
+          ctx.fill();
+          ctx.strokeStyle = '#F7B3BE';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+          // tag text
+          ctx.fillStyle = '#C4102E';
+          ctx.font = '600 18px -apple-system, sans-serif';
+          ctx.fillText(txt, tagX + 10, ingY + 4);
+          tagX += tagW + 8;
+        });
+        ingY += tagH + 8;
+      }
+
+      // notes
+      if (meal.notes) {
+        ctx.fillStyle = '#888';
+        ctx.font = 'italic 16px -apple-system, sans-serif';
+        ctx.fillText('备注：' + meal.notes, padX + 20, ingY + 10);
+      }
+
+      y = blockY + blockH + 18;
     });
 
-    // Always download (most reliable across all browsers)
-    const dataUrl = canvas.toDataURL('image/png');
-    const link = document.createElement('a');
-    link.download = '\u8FA3\u5821\u8F85\u98DF_' + dateStr + '.png';
-    link.href = dataUrl;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    showToast('\u56FE\u7247\u5DF2\u4FDD\u5B58\uFF0C\u53EF\u4ECE\u76F8\u518C\u53D1\u9001\u5230\u5FAE\u4FE1 \u2713');
+    // Summary bar
+    y += 10;
+    var barH = 95;
+    ctx.fillStyle = '#F9F6ED';
+    rrect(padX, y, blockW, barH, 16);
+    ctx.fill();
+    ctx.strokeStyle = '#E8E3CE';
+    ctx.lineWidth = 3;
+    ctx.stroke();
 
-    // Try Web Share API as bonus (iOS Safari)
-    if (navigator.share) {
-      try {
-        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
-        if (blob && navigator.canShare && navigator.canShare({ files: [new File([blob], '\u8FA3\u5821\u8F85\u98DF_' + dateStr + '.png', { type: 'image/png' })] })) {
-          await navigator.share({ title: '\u8FA3\u5821\u4ECA\u65E5\u8F85\u98DF', files: [new File([blob], '\u8FA3\u8F85\u98DF.png', { type: 'image/png' })] });
-        }
-      } catch (e) { /* user cancelled share, ignore */ }
-    }
+    var cellW = blockW / 3;
+    ctx.textAlign = 'center';
+    // col 1
+    ctx.fillStyle = '#E31837';
+    ctx.font = 'bold 800 38px -apple-system, sans-serif';
+    ctx.fillText(String(dayMeals.length), padX + cellW * 0.5, y + 48);
+    ctx.fillStyle = '#888';
+    ctx.font = '18px -apple-system, sans-serif';
+    ctx.fillText('顿辅食', padX + cellW * 0.5, y + 74);
+    // col 2
+    ctx.fillStyle = '#E31837';
+    ctx.font = 'bold 800 38px -apple-system, sans-serif';
+    ctx.fillText(String(totalIngCount), padX + cellW * 1.5, y + 48);
+    ctx.fillStyle = '#888';
+    ctx.font = '18px -apple-system, sans-serif';
+    ctx.fillText('种食材', padX + cellW * 1.5, y + 74);
+    // col 3
+    ctx.fillStyle = '#E31837';
+    ctx.font = 'bold 800 38px -apple-system, sans-serif';
+    ctx.fillText(String(totalGrams), padX + cellW * 2.5, y + 48);
+    ctx.fillStyle = '#888';
+    ctx.font = '18px -apple-system, sans-serif';
+    ctx.fillText('克总量', padX + cellW * 2.5, y + 74);
+
+    y += barH + 30;
+
+    // Footer
+    ctx.fillStyle = '#bbb';
+    ctx.font = '18px -apple-system, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('辣堡的辅食日记 · 用❤️记录每一口', W/2, y + 10);
+
+    // Trim canvas to actual content
+    var trimmed = document.createElement('canvas');
+    trimmed.width = W;
+    trimmed.height = y + 50;
+    var tctx = trimmed.getContext('2d');
+    tctx.fillStyle = '#FFFDF7';
+    tctx.fillRect(0, 0, W, y + 50);
+    tctx.drawImage(canvas, 0, 0);
+
+    // Export
+    trimmed.toBlob(function(blob) {
+      if (!blob) {
+        alert('生成图片失败，请重试');
+        if (btn) { btn.textContent = '今日食谱'; btn.disabled = false; }
+        return;
+      }
+      var url = URL.createObjectURL(blob);
+      var link = document.createElement('a');
+      link.download = '辣堡辅食_' + dateStr + '.png';
+      link.href = url;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(function() { URL.revokeObjectURL(url); }, 5000);
+      showToast('图片已保存，可从相册发送到微信 ✓');
+
+      // Try Web Share API (iOS)
+      if (navigator.share && navigator.canShare) {
+        try {
+          var file = new File([blob], '辣堡辅食_' + dateStr + '.png', { type: 'image/png' });
+          if (navigator.canShare({ files: [file] })) {
+            navigator.share({ title: '辣堡今日辅食', files: [file] }).catch(function() {});
+          }
+        } catch(e) {}
+      }
+
+      if (btn) { btn.textContent = '今日食谱'; btn.disabled = false; }
+    }, 'image/png');
+
   } catch (err) {
     console.error('Share card failed:', err);
-    alert('\u751F\u6210\u56FE\u7247\u5931\u8D25\uFF0C\u8BF7\u91CD\u8BD5');
-  } finally {
-    wrap.remove();
-    if (btn) { btn.textContent = '\u4ECA\u65E5\u98DF\u8C31'; btn.disabled = false; }
+    alert('生成图片失败：' + err.message);
+    if (btn) { btn.textContent = '今日食谱'; btn.disabled = false; }
   }
 }
+
 
 // ===== Toast =====
 function showToast(msg) {
